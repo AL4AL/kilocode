@@ -5,15 +5,14 @@ export const BASE = "https://openrouter.ai/api/v1/batches"
 
 const pollMs = () => {
   const raw = process.env.KILO_OPENROUTER_BATCH_POLL_MS
-  const n = raw ? Number(raw) : 60_000
-  return Number.isFinite(n) && n > 0 ? n : 60_000
+  const n = raw ? Number(raw) : 5_000
+  return Number.isFinite(n) && n > 0 ? n : 5_000
 }
 
-const timeoutMs = () => {
-  const raw = process.env.KILO_OPENROUTER_BATCH_TIMEOUT_MS
-  const n = raw ? Number(raw) : 25 * 60 * 60_000
-  return Number.isFinite(n) && n > 0 ? n : 25 * 60 * 60_000
-}
+const fatalHttp = (status: number) => status === 402 || status === 410
+
+/** OpenRouter quickstart: for `completed`, wait until `results` is present (webhook can race ahead of GET). */
+const resultsReady = (info: BatchInfo) => info.status !== "completed" || info.results != null
 
 export const BatchStatus = Schema.Literals([
   "validating",
@@ -115,17 +114,27 @@ export async function create(input: {
   return json
 }
 
-export async function get(input: { token: string; id: string; fetch?: FetchLike }): Promise<BatchInfo> {
+type BatchRead = {
+  status: number
+  info?: BatchInfo
+  message: string
+}
+
+async function read(input: { token: string; id: string; fetch?: FetchLike }): Promise<BatchRead> {
   const http = input.fetch ?? fetch
   const res = await http(`${BASE}/${encodeURIComponent(input.id)}`, {
     headers: { Authorization: `Bearer ${input.token}` },
   })
   const json = (await res.json().catch(() => ({}))) as BatchInfo & { error?: BatchError }
-  if (!res.ok) {
-    const message = json.error?.message ?? `OpenRouter batch get failed (${res.status})`
-    throw new Error(message)
-  }
-  return json
+  const message = json.error?.message ?? `OpenRouter batch get failed (${res.status})`
+  if (!res.ok) return { status: res.status, message }
+  return { status: res.status, info: json, message }
+}
+
+export async function get(input: { token: string; id: string; fetch?: FetchLike }): Promise<BatchInfo> {
+  const row = await read(input)
+  if (row.info) return row.info
+  throw new Error(row.message)
 }
 
 export async function cancel(input: { token: string; id: string; fetch?: FetchLike }) {
@@ -149,15 +158,28 @@ export async function poll(input: {
   fetch?: FetchLike
   onStatus?: (info: BatchInfo) => void
 }): Promise<BatchInfo> {
-  const start = Date.now()
-  let wait = pollMs()
+  const interval = pollMs()
   while (true) {
     if (input.signal?.aborted) throw input.signal.reason ?? new DOMException("Aborted", "AbortError")
-    const info = await get({ token: input.token, id: input.id, fetch: input.fetch })
+    const row = await read({ token: input.token, id: input.id, fetch: input.fetch })
+    if (fatalHttp(row.status)) throw new Error(row.message)
+    if (row.status === 404 || row.status === 429 || row.status >= 500) {
+      const delay = row.status === 429 ? Math.max(interval, 60_000) : interval
+      await sleep(delay, input.signal)
+      continue
+    }
+    if (!row.info) {
+      if (row.status >= 400) throw new Error(row.message)
+      await sleep(interval, input.signal)
+      continue
+    }
+    const info = row.info
     input.onStatus?.(info)
-    if (TERMINAL.has(info.status)) return info
-    if (Date.now() - start > timeoutMs()) throw new Error("OpenRouter batch poll timed out")
-    await sleep(wait, input.signal)
-    if (wait < 5 * 60_000) wait = Math.min(wait * 1.5, 5 * 60_000)
+    if (TERMINAL.has(info.status) && resultsReady(info)) return info
+    await sleep(interval, input.signal)
   }
+}
+
+export function batchFailureMessage(info: BatchInfo) {
+  return info.error?.message ?? `OpenRouter batch ${info.status}`
 }

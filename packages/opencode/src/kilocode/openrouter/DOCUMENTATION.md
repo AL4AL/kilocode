@@ -1,6 +1,6 @@
 # OpenRouter Batch API (implementation notes)
 
-Docs read (2026-11-13):
+Docs read (2026-11-14):
 
 | Topic | URL |
 |-------|-----|
@@ -13,12 +13,34 @@ Docs read (2026-11-13):
 ## Behavior we implement
 
 - `POST https://openrouter.ai/api/v1/batches` → **202**, `status: "validating"`.
-- Poll `GET /v1/batches/{id}` (~1 min interval, backoff on 429).
+- Poll `GET /v1/batches/{id}` every **5s** while `kilo serve` runs (default `KILO_OPENROUTER_BATCH_POLL_MS=5000`); backoff to 60s on `429`. No client timeout — only terminal batch statuses (`failed`, `expired`, `cancelled`) fail the turn. Treat HTTP `404` during poll as “not visible yet”. For `completed`, wait until `results` is non-null (per quickstart).
 - `DELETE /v1/batches/{id}` on user cancel.
 - Request JSON: `endpoint`, `model`, optional `provider` / `completion_window` / `callback_url` **before** `requests`.
 - One chat step → one batch with a single `requests[]` item (`custom_id` per user message).
 - BYOK OpenRouter API key only (not Kilo Gateway batch).
-- Resume: persisted `batchId` + GET on `kilo serve` start (no webhooks, no GCS/BQ `input`).
+- Resume: persisted `batchId` in `openrouter-batch.json`; `armBatchResumeLoop()` sweeps every **5s** while `kilo serve` runs (extension enabled). No webhooks, no GCS/BQ `input`.
+
+## Polling and failures
+
+Aligned with the quickstart `waitForBatch` pattern:
+
+| Situation | Behavior |
+|---|---|
+| `validating` / `in_progress` / `finalizing` / `cancelling` | Keep polling at `KILO_OPENROUTER_BATCH_POLL_MS` (default 5s). |
+| `completed` but `results` is null | Keep polling until results arrive (GET can lag webhooks). |
+| HTTP `404` on GET | Treat as eventual consistency; keep polling (do not surface “batch not found” immediately). |
+| HTTP `429` | Sleep at least 60s, then retry. |
+| HTTP `5xx` | Sleep 5s, retry. |
+| HTTP `402` or `410` | Fail immediately (billing / gone). |
+| `failed` / `expired` / `cancelled` | Fail the turn with OpenRouter `error.message`. |
+
+There is no Kilo-side poll timeout. A turn stays in `waiting_batch` until OpenRouter returns a terminal status or the user stops.
+
+## Environment
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `KILO_OPENROUTER_BATCH_POLL_MS` | `5000` | Interval between `GET /v1/batches/{id}` while pending. |
 
 ## Batch-eligible models
 

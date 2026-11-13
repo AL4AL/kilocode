@@ -8,7 +8,7 @@ import type { Provider } from "@/provider/provider"
 import type { Prepared } from "@/session/llm/request"
 import type { SessionID } from "@/session/schema"
 import type { MessageID } from "@/session/schema"
-import { create, poll } from "./batch"
+import { batchFailureMessage, create, poll } from "./batch"
 import { fromResult } from "./batch-completion"
 import { OpenRouterBatchActive } from "./batch-active"
 import { OpenRouterBatchStore } from "./batch-store"
@@ -123,6 +123,12 @@ async function* runPoll(input: BatchStreamInput, tokenValue: string) {
       signal: merged.signal,
       fetch: input.fetch,
     })
+    if (final.status !== "completed") {
+      OpenRouterBatchStore.clear(customId)
+      OpenRouterBatchActive.clear(input.sessionID)
+      clearWaitingBatch(input.sessionID)
+      throw new Error(batchFailureMessage(final))
+    }
     OpenRouterBatchStore.clear(customId)
     OpenRouterBatchActive.clear(input.sessionID)
     clearWaitingBatch(input.sessionID)
@@ -130,9 +136,11 @@ async function* runPoll(input: BatchStreamInput, tokenValue: string) {
     const events = fromResult(item)
     for (const event of events) yield event
   } catch (err) {
-    if (batchId && !merged.signal.aborted) OpenRouterBatchStore.clear(customId)
     OpenRouterBatchActive.clear(input.sessionID)
-    clearWaitingBatch(input.sessionID)
+    if (merged.signal.aborted) {
+      if (batchId) OpenRouterBatchStore.clear(customId)
+      clearWaitingBatch(input.sessionID)
+    }
     throw err
   } finally {
     ctrl.abort()

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { buildCreateBody, create, cancel, TERMINAL } from "@/kilocode/openrouter/batch"
+import { buildCreateBody, create, cancel, poll, TERMINAL } from "@/kilocode/openrouter/batch"
 import { createBatchFetch } from "../../lib/openrouter-batch-server"
 
 describe("openrouter batch client", () => {
@@ -52,5 +52,68 @@ describe("openrouter batch client", () => {
   test("terminal statuses", () => {
     expect(TERMINAL.has("completed")).toBe(true)
     expect(TERMINAL.has("in_progress")).toBe(false)
+  })
+
+  test("poll waits for results on completed", async () => {
+    const id = "batch_results_lag"
+    let gets = 0
+    const prevPoll = process.env.KILO_OPENROUTER_BATCH_POLL_MS
+    process.env.KILO_OPENROUTER_BATCH_POLL_MS = "1"
+    try {
+      const http = (async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = typeof input === "string" ? input : input.toString()
+        if (!url.includes(id)) return new Response("not found", { status: 404 })
+        gets++
+        if (gets < 2) {
+          return new Response(JSON.stringify({ id, status: "completed", results: null }), { status: 200 })
+        }
+        return new Response(
+          JSON.stringify({ id, status: "completed", results: [{ custom_id: "c1", response: { status_code: 200, body: {} } }] }),
+          { status: 200 },
+        )
+      }) as typeof fetch
+      const done = await poll({ token: "t", id, fetch: http })
+      expect(done.results?.length).toBe(1)
+      expect(gets).toBe(2)
+    } finally {
+      if (prevPoll === undefined) delete process.env.KILO_OPENROUTER_BATCH_POLL_MS
+      else process.env.KILO_OPENROUTER_BATCH_POLL_MS = prevPoll
+    }
+  })
+
+  test("poll retries transient 404 after create", async () => {
+    const id = "batch-1794604808-cfaxmZDFzwAYgO9fOO6i"
+    let gets = 0
+    const prevPoll = process.env.KILO_OPENROUTER_BATCH_POLL_MS
+    process.env.KILO_OPENROUTER_BATCH_POLL_MS = "1"
+    try {
+      const http = (async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = typeof input === "string" ? input : input.toString()
+        if (url.endsWith("/v1/batches") && init?.method === "POST") {
+          return new Response(JSON.stringify({ id, status: "validating" }), { status: 202 })
+        }
+        if (url.includes(id) && init?.method !== "DELETE") {
+          gets++
+          if (gets < 2) {
+            return new Response(JSON.stringify({ error: { message: `Batch job ${id} not found` } }), { status: 404 })
+          }
+          return new Response(
+            JSON.stringify({
+              id,
+              status: "completed",
+              results: [{ custom_id: "c1", response: { status_code: 200, body: { choices: [{ message: { content: "ok" } }] } } }],
+            }),
+            { status: 200 },
+          )
+        }
+        return new Response("not found", { status: 404 })
+      }) as typeof fetch
+      const done = await poll({ token: "t", id, fetch: http })
+      expect(done.status).toBe("completed")
+      expect(gets).toBe(2)
+    } finally {
+      if (prevPoll === undefined) delete process.env.KILO_OPENROUTER_BATCH_POLL_MS
+      else process.env.KILO_OPENROUTER_BATCH_POLL_MS = prevPoll
+    }
   })
 })
