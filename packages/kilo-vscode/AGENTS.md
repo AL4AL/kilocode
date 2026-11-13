@@ -132,6 +132,7 @@ Or: `bun packages/opencode/script/kilocode/bubblewrap.ts --arch x64 --output /tm
 | Extension id | `al4al.kilo-code-surge` |
 | Publisher / name | `al4al` / `kilo-code-surge` |
 | Commands / settings prefix | `kilo-code-surge.*` |
+| Version | Bump `version` in this `package.json` before each dogfood VSIX (e.g. `7.8.29-surge.1`). Upstream `7.8.x` alone is not enough for Surge installs to upgrade in place. |
 
 From `packages/kilo-vscode/`:
 
