@@ -148,7 +148,9 @@ Install: **Extensions → Install from VSIX…** — Surge installs **alongside*
 
 Surge does **not** load Kilo-Org cloud marketing notification carousels (`kilo-provider/notifications.ts`); the empty-state multi-step “Try Kilo…” banners are suppressed.
 
-**Sidebar / activity bar icons:** `kilo-light.svg` and `kilo-dark.svg` must stay transparent (no full-bleed `#0B1020` square) so the empty-state mark is visible on VS Code sidebar backgrounds. Activity bar uses the contributed font icon `kilo-surge-logo` (`kilo-icon-font.woff2`); colored activity PNGs are optional fallbacks only.
+**Sidebar / activity bar icons:** `kilo-light.svg` / `kilo-dark.svg` must stay transparent (no full-bleed `#0B1020` square) for the chat empty-state mark. **Activity bar** must use **file paths** (`kilo-activity-light.svg` / `kilo-activity-dark.svg` in `package.json` `viewsContainers`) — do not use `contributes.icons` font ids there; VS Code treats unknown strings as missing files and the container can vanish after restart. Font icon `kilo-surge-logo` is for menus/status bar `$(kilo-surge-logo)` only.
+
+**Activity bar ids (Surge):** container `kilo-code-surge-ActivityBar`, view `kilo-code-surge.SidebarProvider` (upstream was `kilo-code-ActivityBar` / `kilo-code.SidebarProvider`). Workbench layout from upstream does not transfer; use **View: Reset View Locations** or right-click the activity bar → **Kilo+ Surge** if the icon landed in the overflow menu.
 
 ## Architecture
 

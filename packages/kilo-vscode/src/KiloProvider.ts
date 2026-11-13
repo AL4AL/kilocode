@@ -19,7 +19,7 @@ import type { EditorContext, IndexingStatus } from "./services/cli-backend/types
 import { FileIgnoreController } from "./services/autocomplete/shims/FileIgnoreController"
 import { ChatTextAreaAutocomplete } from "./services/autocomplete/chat-autocomplete/ChatTextAreaAutocomplete"
 import { notebookUri } from "./services/autocomplete/continuedev/core/autocomplete/notebook"
-import { EXTENSION_ID } from "./constants"
+import { EXTENSION_ID, SIDEBAR_VIEW_ID } from "./constants"
 import { buildWebviewHtml, getWebviewFontSize, isCursorHost } from "./utils"
 import { saveImage } from "./kilo-provider/save-image"
 import { handleEditorAction } from "./kilo-provider/editor-actions"
@@ -426,7 +426,7 @@ function withGlobalSpeechToTextMessage(message: unknown): unknown {
 }
 
 export class KiloProvider implements vscode.WebviewViewProvider, TelemetryPropertiesProvider {
-  public static readonly viewType = "kilo-code-surge.SidebarProvider"
+  public static readonly viewType = SIDEBAR_VIEW_ID
   private readonly instanceId = crypto.randomUUID()
 
   private webview: vscode.Webview | null = null
