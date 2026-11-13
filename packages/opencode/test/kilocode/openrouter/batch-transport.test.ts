@@ -110,10 +110,10 @@ describe("batch transport stream", () => {
     expect(mock.posts.length).toBe(2)
   })
 
-  test("rejects duplicate custom_id when store row exists", async () => {
+  test("resumes poll when store row exists for same turn", async () => {
     const { OpenRouterBatchStore } = await import("@/kilocode/openrouter/batch-store")
     OpenRouterBatchStore.upsert({
-      batchId: "batch_old",
+      batchId: "batch_mock_1",
       customId: "kilo-user-1",
       sessionID: "ses_test" as never,
       userMessageID: "user-1" as never,
@@ -122,7 +122,22 @@ describe("batch transport stream", () => {
       createdAt: new Date().toISOString(),
     })
     process.env.KILO_OPENROUTER_BATCH_POLL_MS = "1"
-    const mock = createBatchFetch({ statuses: [{ status: "completed", results: [] }] })
+    const mock = createBatchFetch({
+      statuses: [
+        {
+          status: "completed",
+          results: [
+            {
+              custom_id: "kilo-user-1",
+              response: {
+                status_code: 200,
+                body: { choices: [{ finish_reason: "stop", message: { content: "resumed" } }] },
+              },
+            },
+          ],
+        },
+      ],
+    })
     const stream = OpenRouterBatchTransport.stream({
       sessionID: "ses_test" as never,
       userMessageID: "user-1" as never,
@@ -139,12 +154,9 @@ describe("batch transport stream", () => {
       abort: new AbortController().signal,
       fetch: mock.fetch,
     })
-    await expect(
-      (async () => {
-        const events = await Effect.runPromise(Stream.runCollect(stream))
-        void events
-      })(),
-    ).rejects.toThrow("duplicate POST")
+    const events = await Effect.runPromise(Stream.runCollect(stream))
+    expect(mock.posts.length).toBe(0)
+    expect(events.some((e) => e.type === "text-delta" && e.text === "resumed")).toBe(true)
     OpenRouterBatchStore.clear("kilo-user-1")
   })
 })

@@ -66,9 +66,22 @@ describe("batch cancel integration", () => {
     45_000,
   )
 
-  test("HL-6 duplicate POST blocked when store row exists for custom_id", async () => {
+  test("HL-6 no duplicate POST when store row exists for same turn", async () => {
     const restore = installBatchMock({
-      statuses: [{ status: "completed" as const, results: [] }],
+      statuses: [
+        {
+          status: "completed" as const,
+          results: [
+            {
+              custom_id: "kilo-msg_dup",
+              response: {
+                status_code: 200,
+                body: { choices: [{ finish_reason: "stop", message: { content: "ok" } }] },
+              },
+            },
+          ],
+        },
+      ],
     })
     try {
       const { OpenRouterBatchTransport } = await import("@/kilocode/openrouter/batch-transport")
@@ -104,7 +117,7 @@ describe("batch cancel integration", () => {
         abort: new AbortController().signal,
         fetch: restore.mock.fetch,
       })
-      await expect(Effect.runPromise(Stream.runCollect(stream))).rejects.toThrow("duplicate POST")
+      await Effect.runPromise(Stream.runCollect(stream))
       expect(restore.mock.posts.length).toBe(0)
       OpenRouterBatchStore.clear(`kilo-${uid}`)
     } finally {

@@ -16,7 +16,7 @@ Docs read (2026-11-14):
 - Poll `GET /v1/batches/{id}` every **5s** while `kilo serve` runs (default `KILO_OPENROUTER_BATCH_POLL_MS=5000`); backoff to 60s on `429`. No client timeout — only terminal batch statuses (`failed`, `expired`, `cancelled`) fail the turn. Treat HTTP `404` during poll as “not visible yet”. For `completed`, wait until `results` is non-null (per quickstart).
 - `DELETE /v1/batches/{id}` on user cancel.
 - Request JSON: `endpoint`, `model`, optional `provider` / `completion_window` / `callback_url` **before** `requests`.
-- One chat step → one batch with a single `requests[]` item (`custom_id` per user message).
+- One chat step → one batch with a single `requests[]` item (`custom_id` per user message). While that row is in `openrouter-batch.json`, a second `LLM.run` for the same user message **resumes poll** on the stored `batchId` instead of POSTing again (session retries / reconnect during `waiting_batch`).
 - BYOK OpenRouter API key only (not Kilo Gateway batch).
 - Resume: persisted `batchId` in `openrouter-batch.json`; `armBatchResumeLoop()` sweeps every **5s** while `kilo serve` runs (extension enabled). No webhooks, no GCS/BQ `input`.
 

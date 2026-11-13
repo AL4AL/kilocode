@@ -76,35 +76,43 @@ async function* runPoll(input: BatchStreamInput, tokenValue: string) {
   input.abort.addEventListener("abort", link, { once: true })
   ctrl.signal.addEventListener("abort", link, { once: true })
 
-  const existing = OpenRouterBatchStore.byCustom(customId)
-  if (existing) {
-    throw new Error(`Batch turn already submitted for ${customId}; refusing duplicate POST`)
+  const saved = OpenRouterBatchStore.byCustom(customId)
+  if (
+    saved &&
+    (saved.sessionID !== input.sessionID ||
+      saved.userMessageID !== input.userMessageID ||
+      saved.providerID !== input.model.providerID)
+  ) {
+    throw new Error(`Batch store row for ${customId} does not match this turn; refusing duplicate POST`)
   }
 
-  let batchId: string | undefined
+  let batchId = saved?.batchId
   try {
-    const created = await create({
-      token: tokenValue,
-      fetch: input.fetch,
-      payload: {
-        endpoint: "/v1/chat/completions",
-        model: apiModel,
+    if (!batchId) {
+      const created = await create({
+        token: tokenValue,
+        fetch: input.fetch,
+        payload: {
+          endpoint: "/v1/chat/completions",
+          model: apiModel,
+          customId,
+          body: completionBody(input),
+        },
+      })
+      batchId = created.id
+      OpenRouterBatchStore.upsert({
+        batchId: created.id,
         customId,
-        body: completionBody(input),
-      },
-    })
-    batchId = created.id
-    OpenRouterBatchStore.upsert({
-      batchId: created.id,
-      customId,
-      sessionID: input.sessionID,
-      userMessageID: input.userMessageID,
-      model: apiModel,
-      providerID: input.model.providerID,
-      createdAt: new Date().toISOString(),
-    })
+        sessionID: input.sessionID,
+        userMessageID: input.userMessageID,
+        model: apiModel,
+        providerID: input.model.providerID,
+        createdAt: new Date().toISOString(),
+      })
+    }
+
     OpenRouterBatchActive.set(input.sessionID, {
-      batchId: created.id,
+      batchId: batchId!,
       customId,
       abort: ctrl,
       token: tokenValue,
@@ -112,14 +120,14 @@ async function* runPoll(input: BatchStreamInput, tokenValue: string) {
     })
     setWaitingBatch({
       sessionID: input.sessionID,
-      batchId: created.id,
+      batchId: batchId!,
       customId,
       modelId: apiModel,
     })
 
     const final = await poll({
       token: tokenValue,
-      id: created.id,
+      id: batchId!,
       signal: merged.signal,
       fetch: input.fetch,
     })
