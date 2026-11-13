@@ -148,6 +148,8 @@ Install: **Extensions → Install from VSIX…** — Surge installs **alongside*
 
 Surge does **not** load Kilo-Org cloud marketing notification carousels (`kilo-provider/notifications.ts`); the empty-state multi-step “Try Kilo…” banners are suppressed.
 
+**Sidebar / activity bar icons:** `kilo-light.svg` and `kilo-dark.svg` must stay transparent (no full-bleed `#0B1020` square) so the empty-state mark is visible on VS Code sidebar backgrounds. Activity bar uses the contributed font icon `kilo-surge-logo` (`kilo-icon-font.woff2`); colored activity PNGs are optional fallbacks only.
+
 ## Architecture
 
 ### Extension ↔ CLI Backend
