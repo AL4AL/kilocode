@@ -66,12 +66,10 @@ export const KILO_MODEL_SCHEMA_EXTENSIONS = {
 export function patchModelsDevModel(providerID: string, source: any) {
   const api = typeof source?.id === "string" ? source.id : ""
   return {
+    // `batch` marks chat bases that have a batch twin for injectBatchPicker — not a batch picker row.
     openrouterBatch:
       providerID === "openrouter" &&
-      (source?.batch === true ||
-        source?.openrouterBatch === true ||
-        api.endsWith("-batch") ||
-        api.endsWith(":batch"))
+      (source?.openrouterBatch === true || api.endsWith("-batch") || api.endsWith(":batch"))
         ? true
         : source?.openrouterBatch,
     variants: providerID === "kilo" ? (source.variants ?? {}) : {},

@@ -4,6 +4,25 @@ import { Provider } from "../../src/provider/provider"
 import { patchModelsDevModel } from "../../src/kilocode/provider/provider"
 
 describe("Kilo provider model metadata", () => {
+  test("does not set openrouterBatch on chat bases that only have batch capability metadata", () => {
+    const base = patchModelsDevModel("openrouter", {
+      id: "openai/gpt-6.1-terra",
+      batch: true,
+    })
+    expect(base.openrouterBatch).toBeUndefined()
+
+    const twin = patchModelsDevModel("openrouter", {
+      id: "openai/gpt-6.1-terra:batch",
+      openrouterBatch: true,
+    })
+    expect(twin.openrouterBatch).toBe(true)
+
+    const synthetic = patchModelsDevModel("openrouter", {
+      id: "openai/gpt-6.1-terra-batch",
+    })
+    expect(synthetic.openrouterBatch).toBe(true)
+  })
+
   test("preserves Auto Efficient routing models from Models.dev data", () => {
     const patch = patchModelsDevModel("kilo", {
       autoRouting: { models: ["google/gemini-2.5-flash", "anthropic/claude-sonnet-4.6"] },
