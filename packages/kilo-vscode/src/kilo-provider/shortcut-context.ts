@@ -3,6 +3,7 @@ import * as path from "node:path"
 import { readFileSync } from "node:fs"
 import { buildKeybindingMap } from "../agent-manager/format-keybinding"
 import { mergeUserKeybindings, parseJsonc, userKeybindingFiles } from "../agent-manager/user-keybindings"
+import { EXTENSION_ID } from "../constants"
 
 type Post = (msg: unknown) => void
 
@@ -20,7 +21,7 @@ function readKeybindings(file: string): unknown {
 
 /** Extension keybindings with the user's keybindings.json applied, for the current platform. */
 export function keybindings(ctx?: vscode.ExtensionContext) {
-  const ext = vscode.extensions.getExtension("kilocode.kilo-code")
+  const ext = vscode.extensions.getExtension(EXTENSION_ID)
   const defaults = ext?.packageJSON?.contributes?.keybindings ?? []
   const user = files(ctx)
     .map(readKeybindings)

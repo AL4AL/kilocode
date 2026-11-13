@@ -48,7 +48,7 @@ The VS Code extension spawns or connects to a `kilo serve` process and communica
 
 | Package | Name | Role |
 |---|---|---|
-| `packages/kilo-vscode/` | `kilo-code` | **This package.** VS Code extension. |
+| `packages/kilo-vscode/` | `kilo-code-surge` (`al4al.kilo-code-surge`) | **This package.** Surge VS Code extension (separate id from upstream `kilocode.kilo-code`). |
 | `packages/kilo-gateway/` | `@kilocode/kilo-gateway` | Auth (device flow), AI provider routing (OpenRouter), Kilo API integration (profile, balance, teams) |
 | `packages/kilo-ui/` | `@kilocode/kilo-ui` | SolidJS component library (40+ components, built on `@kobalte/core`). Shared by this extension's webview and docs screenshot stories |
 | `packages/kilo-telemetry/` | `@kilocode/kilo-telemetry` | PostHog analytics + OpenTelemetry tracing for the CLI |
@@ -99,6 +99,51 @@ bun script/local-bin.ts --force
 ```
 
 The script checks for a prebuilt binary in `packages/opencode/dist/`, builds the CLI if needed, and copies it to `bin/kilo`.
+
+`local-bin.ts` forwards `KILO_SKIP_BUNDLED_BWRAP`, `ZIG`, and `KILO_BWRAP_PATH` into its rebuild fingerprint and inherited env when it triggers `packages/opencode` builds.
+
+### Linux: bundled Bubblewrap (Zig)
+
+On **Linux**, the opencode build bundles a private `bwrap` helper unless skipped. That step needs **Zig** (`zig cc`, musl); without Zig the build errors from `packages/opencode/script/kilocode/bubblewrap.ts`. Upstream CI installs Zig via `.github/actions/setup-linux-sandbox`; macOS/Windows devs usually never hit this.
+
+**Default for AL4AL Surge dogfood builds (no Zig installed):**
+
+```bash
+export KILO_SKIP_BUNDLED_BWRAP=1
+```
+
+Use the same export for `bun script/local-bin.ts`, `bun run snapshot:build`, `bun run package`, and `bun run script/build.ts --single --skip-install` in `packages/opencode/`. The VSIX still ships a working `bin/kilo`; only the **bundled** `bin/bwrap` + license tree is omitted. Sandbox may fall back to `bwrap-helper.ts` (system `bwrap` or `KILO_BWRAP_PATH`).
+
+**Full Linux CLI (release-like sandbox bundle):**
+
+```bash
+unset KILO_SKIP_BUNDLED_BWRAP
+# Zig 0.14.x on PATH, or:
+export ZIG=/path/to/zig
+cd packages/opencode && bun run script/build.ts --single --skip-install
+```
+
+Or: `bun packages/opencode/script/kilocode/bubblewrap.ts --arch x64 --output /tmp/kilo-bwrap` then `export KILO_BWRAP_PATH=/tmp/kilo-bwrap`.
+
+### Surge VSIX packaging
+
+| Item | Value |
+|---|---|
+| Extension id | `al4al.kilo-code-surge` |
+| Publisher / name | `al4al` / `kilo-code-surge` |
+| Commands / settings prefix | `kilo-code-surge.*` |
+
+From `packages/kilo-vscode/`:
+
+```bash
+export KILO_SKIP_BUNDLED_BWRAP=1   # typical on Linux without Zig
+bun run snapshot:build             # VSIX under $TMPDIR/kilo-vscode-snapshots/
+# or: bun run snapshot:install     # build + code --install-extension
+```
+
+`snapshot:build` runs `build:check:production` (includes **lint**). Fix lint failures before packaging when possible. If only lint blocks and a dogfood VSIX is urgent, mirror `script/dev-snapshot.ts`: `local-bin.ts --compiled`, parallel `check-types` / `check-types:webview` / `bundle:production`, then `createVSIX` (see that script).
+
+Install: **Extensions → Install from VSIX…** — Surge installs **alongside** upstream Kilo Code because the id differs.
 
 ## Architecture
 
@@ -224,8 +269,8 @@ Generated screenshot baselines live under `packages/kilo-docs/public/img/screens
 
 ## Naming Conventions
 
-- All VSCode commands must use `kilo-code.new.` prefix (not `kilo-code.`)
-- All view IDs must use `kilo-code.new.` prefix, **except** the sidebar view which uses `kilo-code.SidebarProvider` to preserve user sidebar position when upgrading from the legacy extension
+- All VSCode commands must use `kilo-code-surge.new.` prefix (not `kilo-code-surge.`)
+- All view IDs must use `kilo-code-surge.new.` prefix, **except** the sidebar view which uses `kilo-code-surge.SidebarProvider` (Surge publishes as `al4al.kilo-code-surge`, separate from upstream `kilocode.kilo-code`)
 
 ## Kilocode Change Markers
 

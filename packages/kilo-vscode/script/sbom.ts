@@ -94,7 +94,7 @@ export async function vsix(input: { file: string; target: string; release: Relea
   const bom = compose({
     subject,
     product: {
-      name: "kilo-code",
+      name: "kilo-code-surge",
       version: input.release.version,
       type: "application",
       description: `Kilo Code VS Code extension for ${input.target}`,

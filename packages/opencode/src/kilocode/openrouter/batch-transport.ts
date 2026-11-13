@@ -37,7 +37,7 @@ function completionBody(input: BatchStreamInput) {
   })
   const body: Record<string, unknown> = {
     messages: input.prepared.messages as ModelMessage[],
-    model: input.model.api.id.replace(/-batch$/, ""),
+    model: input.model.api.id.replace(/-batch$/, "").replace(/:batch$/, ""),
   }
   if (input.prepared.params.temperature != null) body.temperature = input.prepared.params.temperature
   if (input.prepared.params.topP != null) body.top_p = input.prepared.params.topP
@@ -56,7 +56,7 @@ function completionBody(input: BatchStreamInput) {
 
 async function* runPoll(input: BatchStreamInput, tokenValue: string) {
   const customId = `kilo-${input.userMessageID}`
-  const apiModel = input.model.api.id.replace(/-batch$/, "")
+  const apiModel = input.model.api.id.replace(/-batch$/, "").replace(/:batch$/, "")
   const ctrl = new AbortController()
   const merged = new AbortController()
   const link = () => {

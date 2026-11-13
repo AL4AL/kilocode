@@ -67,7 +67,11 @@ export function patchModelsDevModel(providerID: string, source: any) {
   const api = typeof source?.id === "string" ? source.id : ""
   return {
     openrouterBatch:
-      providerID === "openrouter" && (source?.batch === true || source?.openrouterBatch === true || api.endsWith("-batch"))
+      providerID === "openrouter" &&
+      (source?.batch === true ||
+        source?.openrouterBatch === true ||
+        api.endsWith("-batch") ||
+        api.endsWith(":batch"))
         ? true
         : source?.openrouterBatch,
     variants: providerID === "kilo" ? (source.variants ?? {}) : {},

@@ -140,7 +140,7 @@ describe("KiloProvider pending session refresh", () => {
     await connection.connect()
     const reads: string[] = []
     const ctx = {
-      globalStorageUri: { fsPath: "/storage/kilocode.kilo-code" },
+      globalStorageUri: { fsPath: "/storage/al4al.kilo-code-surge" },
       globalState: { get: (_key: string, fallback?: unknown) => fallback },
       secrets: {
         get: async (key: string) => {

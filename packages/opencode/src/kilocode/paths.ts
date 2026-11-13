@@ -1,31 +1,33 @@
 import * as path from "path"
 import os from "os"
 import { Filesystem } from "../util/filesystem"
+import { Surge } from "./surge"
 
 export namespace KilocodePaths {
   const home = () => process.env.HOME || process.env.USERPROFILE || os.homedir()
 
   /**
    * Get the platform-specific VSCode global storage path for Kilocode extension.
-   * - macOS: ~/Library/Application Support/Code/User/globalStorage/kilocode.kilo-code
-   * - Windows: %APPDATA%/Code/User/globalStorage/kilocode.kilo-code
-   * - Linux: ~/.config/Code/User/globalStorage/kilocode.kilo-code
+   * - macOS: ~/Library/Application Support/Code/User/globalStorage/<surge-extension-id>
+   * - Windows: %APPDATA%/Code/User/globalStorage/<surge-extension-id>
+   * - Linux: ~/.config/Code/User/globalStorage/<surge-extension-id>
    */
   export function vscodeGlobalStorage(): string {
+    const id = Surge.vscodeExtensionId
     const home = os.homedir()
     switch (process.platform) {
       case "darwin":
-        return path.join(home, "Library", "Application Support", "Code", "User", "globalStorage", "kilocode.kilo-code")
+        return path.join(home, "Library", "Application Support", "Code", "User", "globalStorage", id)
       case "win32":
         return path.join(
           process.env.APPDATA || path.join(home, "AppData", "Roaming"),
           "Code",
           "User",
           "globalStorage",
-          "kilocode.kilo-code",
+          id,
         )
       default:
-        return path.join(home, ".config", "Code", "User", "globalStorage", "kilocode.kilo-code")
+        return path.join(home, ".config", "Code", "User", "globalStorage", id)
     }
   }
 

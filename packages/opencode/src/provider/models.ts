@@ -73,8 +73,23 @@ export const layer: Layer.Layer<Service, never, Core.Service | Config.Service | 
             yield* cache.refresh("apertis", aptOpts).pipe(Effect.ignore, Effect.forkDetach)
         })
 
+        const addOpenRouter = Effect.fnUntraced(function* () {
+          if (!providers.openrouter) return
+          const info = yield* auth.get("openrouter").pipe(Effect.catch(() => Effect.succeed(undefined)))
+          const key =
+            cfg.provider?.openrouter?.options?.apiKey ??
+            (info?.type === "api" ? info.key : undefined) ??
+            process.env.OPENROUTER_API_KEY
+          if (!key) return
+          const live = yield* cache.fetch("openrouter", { apiKey: key }).pipe(Effect.catch(() => Effect.succeed({})))
+          if (Object.keys(live).length > 0)
+            providers.openrouter = { ...providers.openrouter, models: live }
+          else yield* cache.refresh("openrouter", { apiKey: key }).pipe(Effect.ignore, Effect.forkDetach)
+        })
+
         if (!allowed) {
           yield* addApertis()
+          yield* addOpenRouter()
           return providers
         }
 
@@ -100,6 +115,7 @@ export const layer: Layer.Layer<Service, never, Core.Service | Config.Service | 
         if (valid && !org && Object.keys(fetched).length === 0)
           yield* cache.refresh("kilo", fetch).pipe(Effect.ignore, Effect.forkDetach)
         yield* addApertis()
+        yield* addOpenRouter()
         return providers
       })
 

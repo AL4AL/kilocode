@@ -8,6 +8,7 @@ export const Surge = {
   upstream: "https://github.com/Kilo-Org/kilocode",
   repo: "https://github.com/AL4AL/kilocode",
   tagline: "Built on Kilo Code",
+  vscodeExtensionId: "al4al.kilo-code-surge",
 } as const
 
 export function surgeVersion(base: string) {

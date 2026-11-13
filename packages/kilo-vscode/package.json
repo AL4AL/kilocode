@@ -1,14 +1,14 @@
 {
-  "name": "kilo-code",
+  "name": "kilo-code-surge",
   "displayName": "Kilo Code Surge (Kilo+): AI Coding Agent",
   "description": "Kilo Code Surge (Kilo+) — AL4AL distribution built on Kilo Code. Same open-source AI coding agent with Surge extras (OpenRouter batch models, Chat agent, and integrations ahead of upstream).",
   "version": "7.8.28",
   "icon": "assets/icons/logo-outline-black.png",
   "galleryBanner": {
-    "color": "#FFFFFF",
-    "theme": "light"
+    "color": "#0B1020",
+    "theme": "dark"
   },
-  "publisher": "kilocode",
+  "publisher": "al4al",
   "repository": {
     "type": "git",
     "url": "https://github.com/AL4AL/kilocode.git",
@@ -70,7 +70,7 @@
     },
     "taskDefinitions": [
       {
-        "type": "kilo-worktree-setup",
+        "type": "kilo-surge-worktree-setup",
         "properties": {
           "script": {
             "type": "string",
@@ -84,8 +84,8 @@
       }
     ],
     "icons": {
-      "kilo-logo": {
-        "description": "Kilo Code logo",
+      "kilo-surge-logo": {
+        "description": "Kilo+ Surge logo",
         "default": {
           "fontPath": "assets/icons/kilo-icon-font.woff2",
           "fontCharacter": "\\F101"
@@ -95,587 +95,587 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "kilo-code-ActivityBar",
-          "title": "Kilo Code",
-          "icon": "assets/icons/kilo-light.png",
-          "darkIcon": "assets/icons/kilo-dark.png"
+          "id": "kilo-code-surge-ActivityBar",
+          "title": "Kilo+ Surge",
+          "icon": "assets/icons/kilo-activity-light.png",
+          "darkIcon": "assets/icons/kilo-activity-dark.png"
         }
       ]
     },
     "views": {
-      "kilo-code-ActivityBar": [
+      "kilo-code-surge-ActivityBar": [
         {
           "type": "webview",
-          "id": "kilo-code.SidebarProvider",
-          "name": "Kilo Code"
+          "id": "kilo-code-surge.SidebarProvider",
+          "name": "Kilo+ Surge"
         }
       ]
     },
     "commands": [
       {
-        "command": "kilo-code.new.plusButtonClicked",
+        "command": "kilo-code-surge.new.plusButtonClicked",
         "title": "New Task",
-        "category": "Kilo Code",
+        "category": "Kilo+ Surge",
         "icon": "$(add)"
       },
       {
-        "command": "kilo-code.new.closeTask",
+        "command": "kilo-code-surge.new.closeTask",
         "title": "Close Task",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.closeAllTasks",
+        "command": "kilo-code-surge.new.closeAllTasks",
         "title": "Close All Tasks",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.agentManagerOpen",
+        "command": "kilo-code-surge.new.agentManagerOpen",
         "title": "Agent Manager",
-        "category": "Kilo Code",
+        "category": "Kilo+ Surge",
         "icon": "$(organization)"
       },
       {
-        "command": "kilo-code.new.marketplaceButtonClicked",
+        "command": "kilo-code-surge.new.marketplaceButtonClicked",
         "title": "Marketplace",
-        "category": "Kilo Code",
+        "category": "Kilo+ Surge",
         "icon": "$(extensions)"
       },
       {
-        "command": "kilo-code.new.historyButtonClicked",
+        "command": "kilo-code-surge.new.historyButtonClicked",
         "title": "History",
-        "category": "Kilo Code",
+        "category": "Kilo+ Surge",
         "icon": "$(history)"
       },
       {
-        "command": "kilo-code.new.profileButtonClicked",
+        "command": "kilo-code-surge.new.profileButtonClicked",
         "title": "Profile",
-        "category": "Kilo Code",
+        "category": "Kilo+ Surge",
         "icon": "$(account)"
       },
       {
-        "command": "kilo-code.new.settingsButtonClicked",
+        "command": "kilo-code-surge.new.settingsButtonClicked",
         "title": "Settings",
-        "category": "Kilo Code",
+        "category": "Kilo+ Surge",
         "icon": "$(settings-gear)"
       },
       {
-        "command": "kilo-code.new.settingsSearch",
+        "command": "kilo-code-surge.new.settingsSearch",
         "title": "Search Settings",
-        "category": "Kilo Code",
+        "category": "Kilo+ Surge",
         "icon": "$(search)"
       },
       {
-        "command": "kilo-code.new.sidebarTitle.plusButtonClicked",
+        "command": "kilo-code-surge.new.sidebarTitle.plusButtonClicked",
         "title": "New Task",
         "icon": "$(add)"
       },
       {
-        "command": "kilo-code.new.sidebarTitle.agentManagerOpen",
+        "command": "kilo-code-surge.new.sidebarTitle.agentManagerOpen",
         "title": "Agent Manager",
         "icon": "$(organization)"
       },
       {
-        "command": "kilo-code.new.sidebarTitle.marketplaceButtonClicked",
+        "command": "kilo-code-surge.new.sidebarTitle.marketplaceButtonClicked",
         "title": "Marketplace",
         "icon": "$(extensions)"
       },
       {
-        "command": "kilo-code.new.sidebarTitle.historyButtonClicked",
+        "command": "kilo-code-surge.new.sidebarTitle.historyButtonClicked",
         "title": "History",
         "icon": "$(history)"
       },
       {
-        "command": "kilo-code.new.sidebarTitle.profileButtonClicked",
+        "command": "kilo-code-surge.new.sidebarTitle.profileButtonClicked",
         "title": "Profile",
         "icon": "$(account)"
       },
       {
-        "command": "kilo-code.new.sidebarTitle.settingsButtonClicked",
+        "command": "kilo-code-surge.new.sidebarTitle.settingsButtonClicked",
         "title": "Settings",
         "icon": "$(settings-gear)"
       },
       {
-        "command": "kilo-code.new.openInTab",
+        "command": "kilo-code-surge.new.openInTab",
         "title": "Open in Tab",
-        "category": "Kilo Code",
+        "category": "Kilo+ Surge",
         "icon": {
           "light": "assets/icons/kilo-light.svg",
           "dark": "assets/icons/kilo-dark.svg"
         }
       },
       {
-        "command": "kilo-code.new.openBrowser",
+        "command": "kilo-code-surge.new.openBrowser",
         "title": "Open Integrated Browser",
-        "category": "Kilo Code",
+        "category": "Kilo+ Surge",
         "icon": "$(globe)"
       },
       {
-        "command": "kilo-code.new.showChanges",
+        "command": "kilo-code-surge.new.showChanges",
         "title": "Show Changes",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.showMemory",
+        "command": "kilo-code-surge.new.showMemory",
         "title": "Show Project Memory",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.toggleMemory",
+        "command": "kilo-code-surge.new.toggleMemory",
         "title": "Toggle Project Memory",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.toggleCaffeination",
+        "command": "kilo-code-surge.new.toggleCaffeination",
         "title": "Toggle Keep Awake",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.autocomplete.generateSuggestions",
+        "command": "kilo-code-surge.new.autocomplete.generateSuggestions",
         "title": "Generate Suggested Edits",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.autocomplete.cancelSuggestions",
+        "command": "kilo-code-surge.new.autocomplete.cancelSuggestions",
         "title": "Cancel Suggested Edits",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.autocomplete.nextEdit.acceptOrJump",
+        "command": "kilo-code-surge.new.autocomplete.nextEdit.acceptOrJump",
         "title": "Next Edit: Accept or Jump to Suggested Edit",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.autocomplete.nextEdit.dismiss",
+        "command": "kilo-code-surge.new.autocomplete.nextEdit.dismiss",
         "title": "Next Edit: Dismiss Pending Suggestion",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.agentManager.previousSession",
+        "command": "kilo-code-surge.new.agentManager.previousSession",
         "title": "Agent Manager: Previous Session",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.agentManager.nextSession",
+        "command": "kilo-code-surge.new.agentManager.nextSession",
         "title": "Agent Manager: Next Session",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.agentManager.previousTab",
+        "command": "kilo-code-surge.new.agentManager.previousTab",
         "title": "Previous Session Tab",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.agentManager.nextTab",
+        "command": "kilo-code-surge.new.agentManager.nextTab",
         "title": "Next Session Tab",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.agentManager.previousTerminal",
+        "command": "kilo-code-surge.new.agentManager.previousTerminal",
         "title": "Agent Manager: Previous Terminal",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.agentManager.nextTerminal",
+        "command": "kilo-code-surge.new.agentManager.nextTerminal",
         "title": "Agent Manager: Next Terminal",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.agentManager.diagnostics",
+        "command": "kilo-code-surge.new.agentManager.diagnostics",
         "title": "Agent Manager: Show Worktree Diagnostics",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.agentManager.search",
+        "command": "kilo-code-surge.new.agentManager.search",
         "title": "Agent Manager: Search Worktrees and Sessions",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.agentManager.showTerminal",
+        "command": "kilo-code-surge.new.agentManager.showTerminal",
         "title": "Agent Manager: Focus Terminal",
-        "category": "Kilo Code",
+        "category": "Kilo+ Surge",
         "icon": "$(terminal)"
       },
       {
-        "command": "kilo-code.new.agentManager.runScript",
+        "command": "kilo-code-surge.new.agentManager.runScript",
         "title": "Agent Manager: Run Script",
-        "category": "Kilo Code",
+        "category": "Kilo+ Surge",
         "icon": "$(play)"
       },
       {
-        "command": "kilo-code.new.agentManager.toggleDiff",
+        "command": "kilo-code-surge.new.agentManager.toggleDiff",
         "title": "Agent Manager: Toggle Diff Panel",
-        "category": "Kilo Code",
+        "category": "Kilo+ Surge",
         "icon": "$(diff)"
       },
       {
-        "command": "kilo-code.new.agentManager.showShortcuts",
+        "command": "kilo-code-surge.new.agentManager.showShortcuts",
         "title": "Agent Manager: Show Keyboard Shortcuts",
-        "category": "Kilo Code",
+        "category": "Kilo+ Surge",
         "icon": "$(keyboard)"
       },
       {
-        "command": "kilo-code.new.agentManager.newTab",
+        "command": "kilo-code-surge.new.agentManager.newTab",
         "title": "Agent Manager: New Tab",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.agentManager.newTerminalTab",
+        "command": "kilo-code-surge.new.agentManager.newTerminalTab",
         "title": "Agent Manager: New Terminal Tab",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.agentManager.newSideTerminal",
+        "command": "kilo-code-surge.new.agentManager.newSideTerminal",
         "title": "Agent Manager: New Sidebar Terminal Tab",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.agentManager.closeTab",
+        "command": "kilo-code-surge.new.agentManager.closeTab",
         "title": "Agent Manager: Close Tab",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.agentManager.newWorktree",
+        "command": "kilo-code-surge.new.agentManager.newWorktree",
         "title": "Agent Manager: Configure New Worktree",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.agentManager.quickWorktree",
+        "command": "kilo-code-surge.new.agentManager.quickWorktree",
         "title": "Agent Manager: New Worktree",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.agentManager.openWorktree",
+        "command": "kilo-code-surge.new.agentManager.openWorktree",
         "title": "Agent Manager: Open Worktree",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.agentManager.updateFromBase",
+        "command": "kilo-code-surge.new.agentManager.updateFromBase",
         "title": "Agent Manager: Update from base",
-        "category": "Kilo Code",
-        "enablement": "activeWebviewPanelId == 'kilo-code.new.AgentManagerPanel'"
+        "category": "Kilo+ Surge",
+        "enablement": "activeWebviewPanelId == 'kilo-code-surge.new.AgentManagerPanel'"
       },
       {
-        "command": "kilo-code.new.agentManager.openPR",
+        "command": "kilo-code-surge.new.agentManager.openPR",
         "title": "Agent Manager: Open Pull Request",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.agentManager.closeWorktree",
+        "command": "kilo-code-surge.new.agentManager.closeWorktree",
         "title": "Agent Manager: Close Worktree",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.agentManager.advancedWorktree",
+        "command": "kilo-code-surge.new.agentManager.advancedWorktree",
         "title": "Agent Manager: Configure New Worktree",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.agentManager.jumpTo1",
+        "command": "kilo-code-surge.new.agentManager.jumpTo1",
         "title": "Agent Manager: Jump to Item 1",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.agentManager.jumpTo2",
+        "command": "kilo-code-surge.new.agentManager.jumpTo2",
         "title": "Agent Manager: Jump to Item 2",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.agentManager.jumpTo3",
+        "command": "kilo-code-surge.new.agentManager.jumpTo3",
         "title": "Agent Manager: Jump to Item 3",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.agentManager.jumpTo4",
+        "command": "kilo-code-surge.new.agentManager.jumpTo4",
         "title": "Agent Manager: Jump to Item 4",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.agentManager.jumpTo5",
+        "command": "kilo-code-surge.new.agentManager.jumpTo5",
         "title": "Agent Manager: Jump to Item 5",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.agentManager.jumpTo6",
+        "command": "kilo-code-surge.new.agentManager.jumpTo6",
         "title": "Agent Manager: Jump to Item 6",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.agentManager.jumpTo7",
+        "command": "kilo-code-surge.new.agentManager.jumpTo7",
         "title": "Agent Manager: Jump to Item 7",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.agentManager.jumpTo8",
+        "command": "kilo-code-surge.new.agentManager.jumpTo8",
         "title": "Agent Manager: Jump to Item 8",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.agentManager.jumpTo9",
+        "command": "kilo-code-surge.new.agentManager.jumpTo9",
         "title": "Agent Manager: Jump to Item 9",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.generateCommitMessage",
+        "command": "kilo-code-surge.new.generateCommitMessage",
         "title": "Generate Commit Message",
-        "category": "Kilo Code",
+        "category": "Kilo+ Surge",
         "icon": {
           "light": "assets/icons/kilo-light.svg",
           "dark": "assets/icons/kilo-dark.svg"
         }
       },
       {
-        "command": "kilo-code.new.explainCode",
+        "command": "kilo-code-surge.new.explainCode",
         "title": "Explain Code",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.fixCode",
+        "command": "kilo-code-surge.new.fixCode",
         "title": "Fix Code",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.improveCode",
+        "command": "kilo-code-surge.new.improveCode",
         "title": "Improve Code",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.addToContext",
+        "command": "kilo-code-surge.new.addToContext",
         "title": "Add to Context",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.terminalAddToContext",
+        "command": "kilo-code-surge.new.terminalAddToContext",
         "title": "Add Terminal Content to Context",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.terminalFixCommand",
+        "command": "kilo-code-surge.new.terminalFixCommand",
         "title": "Fix This Command",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.terminalExplainCommand",
+        "command": "kilo-code-surge.new.terminalExplainCommand",
         "title": "Explain This Command",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.focusChatInput",
+        "command": "kilo-code-surge.new.focusChatInput",
         "title": "Focus Chat Input",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.toggleChatSearch",
+        "command": "kilo-code-surge.new.toggleChatSearch",
         "title": "Toggle Chat Search",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.showOpenTabs",
+        "command": "kilo-code-surge.new.showOpenTabs",
         "title": "Show Open Tabs",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.cycleAgentMode",
+        "command": "kilo-code-surge.new.cycleAgentMode",
         "title": "Cycle Agent Mode",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.cyclePreviousAgentMode",
+        "command": "kilo-code-surge.new.cyclePreviousAgentMode",
         "title": "Cycle Previous Agent Mode",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.toggleAutoApprove",
+        "command": "kilo-code-surge.new.toggleAutoApprove",
         "title": "Toggle Auto-Approve",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.generateTerminalCommand",
+        "command": "kilo-code-surge.new.generateTerminalCommand",
         "title": "Generate Terminal Command",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.takeHeapSnapshot",
+        "command": "kilo-code-surge.new.takeHeapSnapshot",
         "title": "Take Heap Snapshot",
         "category": "Kilo Code"
       },
       {
-        "command": "kilo-code.new.reload",
+        "command": "kilo-code-surge.new.reload",
         "title": "Reload Config and Skills",
         "category": "Kilo Code"
       }
     ],
     "submenus": [
       {
-        "id": "kilo-code.new.editorContextMenu",
+        "id": "kilo-code-surge.new.editorContextMenu",
         "label": "Kilo Code"
       },
       {
-        "id": "kilo-code.new.terminalContextMenu",
+        "id": "kilo-code-surge.new.terminalContextMenu",
         "label": "Kilo Code"
       }
     ],
     "menus": {
       "commandPalette": [
         {
-          "command": "kilo-code.new.sidebarTitle.plusButtonClicked",
+          "command": "kilo-code-surge.new.sidebarTitle.plusButtonClicked",
           "when": "false"
         },
         {
-          "command": "kilo-code.new.sidebarTitle.historyButtonClicked",
+          "command": "kilo-code-surge.new.sidebarTitle.historyButtonClicked",
           "when": "false"
         },
         {
-          "command": "kilo-code.new.sidebarTitle.agentManagerOpen",
+          "command": "kilo-code-surge.new.sidebarTitle.agentManagerOpen",
           "when": "false"
         },
         {
-          "command": "kilo-code.new.agentManager.advancedWorktree",
+          "command": "kilo-code-surge.new.agentManager.advancedWorktree",
           "when": "false"
         },
         {
-          "command": "kilo-code.new.sidebarTitle.marketplaceButtonClicked",
+          "command": "kilo-code-surge.new.sidebarTitle.marketplaceButtonClicked",
           "when": "false"
         },
         {
-          "command": "kilo-code.new.sidebarTitle.profileButtonClicked",
+          "command": "kilo-code-surge.new.sidebarTitle.profileButtonClicked",
           "when": "false"
         },
         {
-          "command": "kilo-code.new.sidebarTitle.settingsButtonClicked",
+          "command": "kilo-code-surge.new.sidebarTitle.settingsButtonClicked",
           "when": "false"
         }
       ],
       "view/title": [
         {
-          "command": "kilo-code.new.sidebarTitle.plusButtonClicked",
+          "command": "kilo-code-surge.new.sidebarTitle.plusButtonClicked",
           "group": "navigation@0",
-          "when": "view == kilo-code.SidebarProvider && !kilo-code.new.isCursor"
+          "when": "view == kilo-code-surge.SidebarProvider && !kilo-code-surge.new.isCursor"
         },
         {
-          "command": "kilo-code.new.sidebarTitle.historyButtonClicked",
+          "command": "kilo-code-surge.new.sidebarTitle.historyButtonClicked",
           "group": "navigation@1",
-          "when": "view == kilo-code.SidebarProvider && !kilo-code.new.isCursor"
+          "when": "view == kilo-code-surge.SidebarProvider && !kilo-code-surge.new.isCursor"
         },
         {
-          "command": "kilo-code.new.sidebarTitle.agentManagerOpen",
+          "command": "kilo-code-surge.new.sidebarTitle.agentManagerOpen",
           "group": "navigation@2",
-          "when": "view == kilo-code.SidebarProvider && !kilo-code.new.isCursor"
+          "when": "view == kilo-code-surge.SidebarProvider && !kilo-code-surge.new.isCursor"
         },
         {
-          "command": "kilo-code.new.sidebarTitle.marketplaceButtonClicked",
+          "command": "kilo-code-surge.new.sidebarTitle.marketplaceButtonClicked",
           "group": "navigation@3",
-          "when": "view == kilo-code.SidebarProvider && !kilo-code.new.isCursor"
+          "when": "view == kilo-code-surge.SidebarProvider && !kilo-code-surge.new.isCursor"
         },
         {
-          "command": "kilo-code.new.sidebarTitle.profileButtonClicked",
+          "command": "kilo-code-surge.new.sidebarTitle.profileButtonClicked",
           "group": "navigation@4",
-          "when": "view == kilo-code.SidebarProvider && !kilo-code.new.isCursor"
+          "when": "view == kilo-code-surge.SidebarProvider && !kilo-code-surge.new.isCursor"
         },
         {
-          "command": "kilo-code.new.sidebarTitle.settingsButtonClicked",
+          "command": "kilo-code-surge.new.sidebarTitle.settingsButtonClicked",
           "group": "navigation@5",
-          "when": "view == kilo-code.SidebarProvider && !kilo-code.new.isCursor"
+          "when": "view == kilo-code-surge.SidebarProvider && !kilo-code-surge.new.isCursor"
         }
       ],
       "scm/title": [
         {
-          "command": "kilo-code.new.generateCommitMessage",
+          "command": "kilo-code-surge.new.generateCommitMessage",
           "group": "navigation",
           "when": "scmProvider == git"
         }
       ],
       "scm/input": [
         {
-          "command": "kilo-code.new.generateCommitMessage",
+          "command": "kilo-code-surge.new.generateCommitMessage",
           "group": "navigation",
           "when": "scmProvider == git"
         }
       ],
       "editor/title": [
         {
-          "command": "kilo-code.new.openInTab",
+          "command": "kilo-code-surge.new.openInTab",
           "group": "navigation",
           "when": "true"
         },
         {
-          "command": "kilo-code.new.plusButtonClicked",
+          "command": "kilo-code-surge.new.plusButtonClicked",
           "group": "navigation@0",
-          "when": "activeWebviewPanelId == kilo-code.new.TabPanel && !kilo-code.new.isCursor"
+          "when": "activeWebviewPanelId == kilo-code-surge.new.TabPanel && !kilo-code-surge.new.isCursor"
         },
         {
-          "command": "kilo-code.new.historyButtonClicked",
+          "command": "kilo-code-surge.new.historyButtonClicked",
           "group": "navigation@1",
-          "when": "activeWebviewPanelId == kilo-code.new.TabPanel && !kilo-code.new.isCursor"
+          "when": "activeWebviewPanelId == kilo-code-surge.new.TabPanel && !kilo-code-surge.new.isCursor"
         },
         {
-          "command": "kilo-code.new.profileButtonClicked",
+          "command": "kilo-code-surge.new.profileButtonClicked",
           "group": "navigation@2",
-          "when": "activeWebviewPanelId == kilo-code.new.TabPanel && !kilo-code.new.isCursor"
+          "when": "activeWebviewPanelId == kilo-code-surge.new.TabPanel && !kilo-code-surge.new.isCursor"
         },
         {
-          "command": "kilo-code.new.settingsButtonClicked",
+          "command": "kilo-code-surge.new.settingsButtonClicked",
           "group": "navigation@3",
-          "when": "activeWebviewPanelId == kilo-code.new.TabPanel && !kilo-code.new.isCursor"
+          "when": "activeWebviewPanelId == kilo-code-surge.new.TabPanel && !kilo-code-surge.new.isCursor"
         }
       ],
       "editor/context": [
         {
-          "submenu": "kilo-code.new.editorContextMenu",
+          "submenu": "kilo-code-surge.new.editorContextMenu",
           "group": "1_kilocode"
         }
       ],
-      "kilo-code.new.editorContextMenu": [
+      "kilo-code-surge.new.editorContextMenu": [
         {
-          "command": "kilo-code.new.explainCode",
+          "command": "kilo-code-surge.new.explainCode",
           "group": "1_actions@1"
         },
         {
-          "command": "kilo-code.new.fixCode",
+          "command": "kilo-code-surge.new.fixCode",
           "group": "1_actions@2"
         },
         {
-          "command": "kilo-code.new.improveCode",
+          "command": "kilo-code-surge.new.improveCode",
           "group": "1_actions@3"
         },
         {
-          "command": "kilo-code.new.addToContext",
+          "command": "kilo-code-surge.new.addToContext",
           "group": "1_actions@4"
         }
       ],
       "terminal/context": [
         {
-          "submenu": "kilo-code.new.terminalContextMenu",
+          "submenu": "kilo-code-surge.new.terminalContextMenu",
           "group": "2_kilocode"
         }
       ],
-      "kilo-code.new.terminalContextMenu": [
+      "kilo-code-surge.new.terminalContextMenu": [
         {
-          "command": "kilo-code.new.terminalAddToContext",
+          "command": "kilo-code-surge.new.terminalAddToContext",
           "group": "1_actions@1"
         },
         {
-          "command": "kilo-code.new.terminalFixCommand",
+          "command": "kilo-code-surge.new.terminalFixCommand",
           "group": "1_actions@2"
         },
         {
-          "command": "kilo-code.new.terminalExplainCommand",
+          "command": "kilo-code-surge.new.terminalExplainCommand",
           "group": "1_actions@3"
         }
       ]
     },
     "keybindings": [
       {
-        "command": "kilo-code.new.focusChatInput",
+        "command": "kilo-code-surge.new.focusChatInput",
         "key": "ctrl+shift+a",
         "mac": "cmd+shift+a"
       },
       {
-        "command": "kilo-code.new.toggleAutoApprove",
+        "command": "kilo-code-surge.new.toggleAutoApprove",
         "key": "ctrl+alt+a",
         "mac": "cmd+alt+a"
       },
       {
-        "command": "kilo-code.new.generateTerminalCommand",
+        "command": "kilo-code-surge.new.generateTerminalCommand",
         "key": "ctrl+shift+g",
         "mac": "cmd+shift+g"
       },
@@ -685,240 +685,240 @@
         "mac": "cmd+shift+m"
       },
       {
-        "command": "kilo-code.new.agentManagerOpen",
+        "command": "kilo-code-surge.new.agentManagerOpen",
         "key": "ctrl+shift+m",
         "mac": "cmd+shift+m"
       },
       {
-        "command": "kilo-code.new.addToContext",
+        "command": "kilo-code-surge.new.addToContext",
         "key": "ctrl+k ctrl+a",
         "mac": "cmd+k cmd+a",
         "when": "editorTextFocus && editorHasSelection"
       },
       {
-        "command": "kilo-code.new.agentManager.previousSession",
+        "command": "kilo-code-surge.new.agentManager.previousSession",
         "key": "ctrl+alt+up",
         "mac": "cmd+alt+up",
-        "when": "activeWebviewPanelId == 'kilo-code.new.AgentManagerPanel'"
+        "when": "activeWebviewPanelId == 'kilo-code-surge.new.AgentManagerPanel'"
       },
       {
-        "command": "kilo-code.new.agentManager.nextSession",
+        "command": "kilo-code-surge.new.agentManager.nextSession",
         "key": "ctrl+alt+down",
         "mac": "cmd+alt+down",
-        "when": "activeWebviewPanelId == 'kilo-code.new.AgentManagerPanel'"
+        "when": "activeWebviewPanelId == 'kilo-code-surge.new.AgentManagerPanel'"
       },
       {
-        "command": "kilo-code.new.agentManager.previousTab",
+        "command": "kilo-code-surge.new.agentManager.previousTab",
         "key": "ctrl+alt+left",
         "mac": "cmd+alt+left",
-        "when": "kilo-code.new.sidebarFocused || activeWebviewPanelId == 'kilo-code.new.TabPanel' || activeWebviewPanelId == 'kilo-code.new.AgentManagerPanel'"
+        "when": "kilo-code-surge.new.sidebarFocused || activeWebviewPanelId == 'kilo-code-surge.new.TabPanel' || activeWebviewPanelId == 'kilo-code-surge.new.AgentManagerPanel'"
       },
       {
-        "command": "kilo-code.new.agentManager.nextTab",
+        "command": "kilo-code-surge.new.agentManager.nextTab",
         "key": "ctrl+alt+right",
         "mac": "cmd+alt+right",
-        "when": "kilo-code.new.sidebarFocused || activeWebviewPanelId == 'kilo-code.new.TabPanel' || activeWebviewPanelId == 'kilo-code.new.AgentManagerPanel'"
+        "when": "kilo-code-surge.new.sidebarFocused || activeWebviewPanelId == 'kilo-code-surge.new.TabPanel' || activeWebviewPanelId == 'kilo-code-surge.new.AgentManagerPanel'"
       },
       {
-        "command": "kilo-code.new.agentManager.previousTerminal",
+        "command": "kilo-code-surge.new.agentManager.previousTerminal",
         "key": "ctrl+shift+[",
         "mac": "cmd+shift+[",
-        "when": "activeWebviewPanelId == 'kilo-code.new.AgentManagerPanel'"
+        "when": "activeWebviewPanelId == 'kilo-code-surge.new.AgentManagerPanel'"
       },
       {
-        "command": "kilo-code.new.agentManager.nextTerminal",
+        "command": "kilo-code-surge.new.agentManager.nextTerminal",
         "key": "ctrl+shift+]",
         "mac": "cmd+shift+]",
-        "when": "activeWebviewPanelId == 'kilo-code.new.AgentManagerPanel'"
+        "when": "activeWebviewPanelId == 'kilo-code-surge.new.AgentManagerPanel'"
       },
       {
-        "command": "kilo-code.new.agentManager.search",
+        "command": "kilo-code-surge.new.agentManager.search",
         "key": "ctrl+f",
         "mac": "cmd+f",
-        "when": "activeWebviewPanelId == 'kilo-code.new.AgentManagerPanel' && !terminalFocus"
+        "when": "activeWebviewPanelId == 'kilo-code-surge.new.AgentManagerPanel' && !terminalFocus"
       },
       {
-        "command": "kilo-code.new.agentManager.showTerminal",
+        "command": "kilo-code-surge.new.agentManager.showTerminal",
         "key": "ctrl+/",
         "mac": "cmd+/",
-        "when": "activeWebviewPanelId == 'kilo-code.new.AgentManagerPanel' && !kilo-code.new.sidebarFocused"
+        "when": "activeWebviewPanelId == 'kilo-code-surge.new.AgentManagerPanel' && !kilo-code-surge.new.sidebarFocused"
       },
       {
-        "command": "kilo-code.new.agentManager.runScript",
+        "command": "kilo-code-surge.new.agentManager.runScript",
         "key": "ctrl+e",
         "mac": "cmd+e",
-        "when": "activeWebviewPanelId == 'kilo-code.new.AgentManagerPanel' && (isMac || !terminalFocus)"
+        "when": "activeWebviewPanelId == 'kilo-code-surge.new.AgentManagerPanel' && (isMac || !terminalFocus)"
       },
       {
-        "command": "kilo-code.new.agentManager.toggleDiff",
+        "command": "kilo-code-surge.new.agentManager.toggleDiff",
         "key": "ctrl+d",
         "mac": "cmd+d",
-        "when": "activeWebviewPanelId == 'kilo-code.new.AgentManagerPanel'"
+        "when": "activeWebviewPanelId == 'kilo-code-surge.new.AgentManagerPanel'"
       },
       {
-        "command": "kilo-code.new.agentManager.showShortcuts",
+        "command": "kilo-code-surge.new.agentManager.showShortcuts",
         "key": "ctrl+shift+/",
         "mac": "cmd+shift+/",
-        "when": "activeWebviewPanelId == 'kilo-code.new.AgentManagerPanel'"
+        "when": "activeWebviewPanelId == 'kilo-code-surge.new.AgentManagerPanel'"
       },
       {
-        "command": "kilo-code.new.agentManager.newTab",
+        "command": "kilo-code-surge.new.agentManager.newTab",
         "key": "ctrl+t",
         "mac": "cmd+t",
-        "when": "activeWebviewPanelId == 'kilo-code.new.AgentManagerPanel' && !kilo-code.new.agentManagerSideTerminalFocused"
+        "when": "activeWebviewPanelId == 'kilo-code-surge.new.AgentManagerPanel' && !kilo-code-surge.new.agentManagerSideTerminalFocused"
       },
       {
-        "command": "kilo-code.new.agentManager.newTerminalTab",
+        "command": "kilo-code-surge.new.agentManager.newTerminalTab",
         "key": "ctrl+shift+t",
         "mac": "cmd+shift+t",
-        "when": "activeWebviewPanelId == 'kilo-code.new.AgentManagerPanel' && !kilo-code.new.agentManagerSideTerminalFocused"
+        "when": "activeWebviewPanelId == 'kilo-code-surge.new.AgentManagerPanel' && !kilo-code-surge.new.agentManagerSideTerminalFocused"
       },
       {
-        "command": "kilo-code.new.agentManager.newSideTerminal",
+        "command": "kilo-code-surge.new.agentManager.newSideTerminal",
         "key": "ctrl+t",
         "mac": "cmd+t",
-        "when": "activeWebviewPanelId == 'kilo-code.new.AgentManagerPanel' && kilo-code.new.agentManagerSideTerminalFocused"
+        "when": "activeWebviewPanelId == 'kilo-code-surge.new.AgentManagerPanel' && kilo-code-surge.new.agentManagerSideTerminalFocused"
       },
       {
-        "command": "kilo-code.new.agentManager.closeTab",
+        "command": "kilo-code-surge.new.agentManager.closeTab",
         "key": "ctrl+w",
         "mac": "cmd+w",
-        "when": "activeWebviewPanelId == 'kilo-code.new.AgentManagerPanel'"
+        "when": "activeWebviewPanelId == 'kilo-code-surge.new.AgentManagerPanel'"
       },
       {
-        "command": "kilo-code.new.agentManager.newWorktree",
+        "command": "kilo-code-surge.new.agentManager.newWorktree",
         "key": "ctrl+n",
         "mac": "cmd+n",
-        "when": "activeWebviewPanelId == 'kilo-code.new.AgentManagerPanel'"
+        "when": "activeWebviewPanelId == 'kilo-code-surge.new.AgentManagerPanel'"
       },
       {
-        "command": "kilo-code.new.agentManager.quickWorktree",
+        "command": "kilo-code-surge.new.agentManager.quickWorktree",
         "key": "ctrl+shift+n",
         "mac": "cmd+shift+n",
-        "when": "activeWebviewPanelId == 'kilo-code.new.AgentManagerPanel'"
+        "when": "activeWebviewPanelId == 'kilo-code-surge.new.AgentManagerPanel'"
       },
       {
-        "command": "kilo-code.new.agentManager.openWorktree",
+        "command": "kilo-code-surge.new.agentManager.openWorktree",
         "key": "ctrl+shift+o",
         "mac": "cmd+shift+o",
-        "when": "activeWebviewPanelId == 'kilo-code.new.AgentManagerPanel'"
+        "when": "activeWebviewPanelId == 'kilo-code-surge.new.AgentManagerPanel'"
       },
       {
-        "command": "kilo-code.new.agentManager.openPR",
+        "command": "kilo-code-surge.new.agentManager.openPR",
         "key": "ctrl+shift+r",
         "mac": "cmd+shift+r",
-        "when": "activeWebviewPanelId == 'kilo-code.new.AgentManagerPanel'"
+        "when": "activeWebviewPanelId == 'kilo-code-surge.new.AgentManagerPanel'"
       },
       {
-        "command": "kilo-code.new.agentManager.closeWorktree",
+        "command": "kilo-code-surge.new.agentManager.closeWorktree",
         "key": "ctrl+shift+w",
         "mac": "cmd+shift+w",
-        "when": "activeWebviewPanelId == 'kilo-code.new.AgentManagerPanel'"
+        "when": "activeWebviewPanelId == 'kilo-code-surge.new.AgentManagerPanel'"
       },
       {
-        "command": "kilo-code.new.agentManager.jumpTo1",
+        "command": "kilo-code-surge.new.agentManager.jumpTo1",
         "key": "ctrl+1",
         "mac": "cmd+1",
-        "when": "activeWebviewPanelId == 'kilo-code.new.AgentManagerPanel'"
+        "when": "activeWebviewPanelId == 'kilo-code-surge.new.AgentManagerPanel'"
       },
       {
-        "command": "kilo-code.new.agentManager.jumpTo2",
+        "command": "kilo-code-surge.new.agentManager.jumpTo2",
         "key": "ctrl+2",
         "mac": "cmd+2",
-        "when": "activeWebviewPanelId == 'kilo-code.new.AgentManagerPanel'"
+        "when": "activeWebviewPanelId == 'kilo-code-surge.new.AgentManagerPanel'"
       },
       {
-        "command": "kilo-code.new.agentManager.jumpTo3",
+        "command": "kilo-code-surge.new.agentManager.jumpTo3",
         "key": "ctrl+3",
         "mac": "cmd+3",
-        "when": "activeWebviewPanelId == 'kilo-code.new.AgentManagerPanel'"
+        "when": "activeWebviewPanelId == 'kilo-code-surge.new.AgentManagerPanel'"
       },
       {
-        "command": "kilo-code.new.agentManager.jumpTo4",
+        "command": "kilo-code-surge.new.agentManager.jumpTo4",
         "key": "ctrl+4",
         "mac": "cmd+4",
-        "when": "activeWebviewPanelId == 'kilo-code.new.AgentManagerPanel'"
+        "when": "activeWebviewPanelId == 'kilo-code-surge.new.AgentManagerPanel'"
       },
       {
-        "command": "kilo-code.new.agentManager.jumpTo5",
+        "command": "kilo-code-surge.new.agentManager.jumpTo5",
         "key": "ctrl+5",
         "mac": "cmd+5",
-        "when": "activeWebviewPanelId == 'kilo-code.new.AgentManagerPanel'"
+        "when": "activeWebviewPanelId == 'kilo-code-surge.new.AgentManagerPanel'"
       },
       {
-        "command": "kilo-code.new.agentManager.jumpTo6",
+        "command": "kilo-code-surge.new.agentManager.jumpTo6",
         "key": "ctrl+6",
         "mac": "cmd+6",
-        "when": "activeWebviewPanelId == 'kilo-code.new.AgentManagerPanel'"
+        "when": "activeWebviewPanelId == 'kilo-code-surge.new.AgentManagerPanel'"
       },
       {
-        "command": "kilo-code.new.agentManager.jumpTo7",
+        "command": "kilo-code-surge.new.agentManager.jumpTo7",
         "key": "ctrl+7",
         "mac": "cmd+7",
-        "when": "activeWebviewPanelId == 'kilo-code.new.AgentManagerPanel'"
+        "when": "activeWebviewPanelId == 'kilo-code-surge.new.AgentManagerPanel'"
       },
       {
-        "command": "kilo-code.new.agentManager.jumpTo8",
+        "command": "kilo-code-surge.new.agentManager.jumpTo8",
         "key": "ctrl+8",
         "mac": "cmd+8",
-        "when": "activeWebviewPanelId == 'kilo-code.new.AgentManagerPanel'"
+        "when": "activeWebviewPanelId == 'kilo-code-surge.new.AgentManagerPanel'"
       },
       {
-        "command": "kilo-code.new.agentManager.jumpTo9",
+        "command": "kilo-code-surge.new.agentManager.jumpTo9",
         "key": "ctrl+9",
         "mac": "cmd+9",
-        "when": "activeWebviewPanelId == 'kilo-code.new.AgentManagerPanel'"
+        "when": "activeWebviewPanelId == 'kilo-code-surge.new.AgentManagerPanel'"
       },
       {
-        "command": "kilo-code.new.cycleAgentMode",
+        "command": "kilo-code-surge.new.cycleAgentMode",
         "key": "ctrl+.",
         "mac": "cmd+.",
-        "when": "kilo-code.new.sidebarFocused || activeWebviewPanelId == 'kilo-code.new.AgentManagerPanel' || activeWebviewPanelId == 'kilo-code.new.TabPanel'"
+        "when": "kilo-code-surge.new.sidebarFocused || activeWebviewPanelId == 'kilo-code-surge.new.AgentManagerPanel' || activeWebviewPanelId == 'kilo-code-surge.new.TabPanel'"
       },
       {
-        "command": "kilo-code.new.cyclePreviousAgentMode",
+        "command": "kilo-code-surge.new.cyclePreviousAgentMode",
         "key": "ctrl+shift+.",
         "mac": "cmd+shift+.",
-        "when": "kilo-code.new.sidebarFocused || activeWebviewPanelId == 'kilo-code.new.AgentManagerPanel' || activeWebviewPanelId == 'kilo-code.new.TabPanel'"
+        "when": "kilo-code-surge.new.sidebarFocused || activeWebviewPanelId == 'kilo-code-surge.new.AgentManagerPanel' || activeWebviewPanelId == 'kilo-code-surge.new.TabPanel'"
       },
       {
-        "command": "kilo-code.new.autocomplete.cancelSuggestions",
+        "command": "kilo-code-surge.new.autocomplete.cancelSuggestions",
         "key": "escape",
-        "when": "editorTextFocus && !editorTabMovesFocus && !inSnippetMode && kilo-code.new.autocomplete.hasSuggestions"
+        "when": "editorTextFocus && !editorTabMovesFocus && !inSnippetMode && kilo-code-surge.new.autocomplete.hasSuggestions"
       },
       {
-        "command": "kilo-code.new.autocomplete.generateSuggestions",
+        "command": "kilo-code-surge.new.autocomplete.generateSuggestions",
         "key": "ctrl+l",
         "mac": "cmd+l",
         "when": "editorTextFocus && !editorTabMovesFocus && !inSnippetMode && kilocode.autocomplete.enableSmartInlineTaskKeybinding && !github.copilot.completions.enabled"
       },
       {
-        "command": "kilo-code.new.autocomplete.showIncompatibilityExtensionPopup",
+        "command": "kilo-code-surge.new.autocomplete.showIncompatibilityExtensionPopup",
         "key": "ctrl+l",
         "mac": "cmd+l",
         "when": "editorTextFocus && !editorTabMovesFocus && !inSnippetMode && kilocode.autocomplete.enableSmartInlineTaskKeybinding && github.copilot.completions.enabled"
       },
       {
-        "command": "kilo-code.new.autocomplete.nextEdit.acceptOrJump",
+        "command": "kilo-code-surge.new.autocomplete.nextEdit.acceptOrJump",
         "key": "tab",
-        "when": "editorTextFocus && !editorTabMovesFocus && !inSnippetMode && !suggestWidgetVisible && kilo-code.nextEdit.hasPendingSuggestion"
+        "when": "editorTextFocus && !editorTabMovesFocus && !inSnippetMode && !suggestWidgetVisible && kilo-code-surge.nextEdit.hasPendingSuggestion"
       },
       {
-        "command": "kilo-code.new.autocomplete.nextEdit.dismiss",
+        "command": "kilo-code-surge.new.autocomplete.nextEdit.dismiss",
         "key": "escape",
-        "when": "editorTextFocus && !editorTabMovesFocus && !inSnippetMode && kilo-code.nextEdit.hasPendingSuggestion"
+        "when": "editorTextFocus && !editorTabMovesFocus && !inSnippetMode && kilo-code-surge.nextEdit.hasPendingSuggestion"
       },
       {
-        "command": "kilo-code.new.settingsSearch",
+        "command": "kilo-code-surge.new.settingsSearch",
         "key": "ctrl+f",
         "mac": "cmd+f",
-        "when": "activeWebviewPanelId == 'kilo-code.new.settingsPanel'"
+        "when": "activeWebviewPanelId == 'kilo-code-surge.new.settingsPanel'"
       }
     ],
     "configuration": {
-      "title": "Kilo Code",
+      "title": "Kilo+ Surge",
       "properties": {
-        "kilo-code.new.language": {
+        "kilo-code-surge.new.language": {
           "type": "string",
           "default": "",
           "description": "Override the UI language for Kilo Code (e.g. en, de, ja). Empty means use VS Code's display language.",
@@ -971,7 +971,7 @@
             "فارسی"
           ]
         },
-        "kilo-code.new.languageCommitMessage": {
+        "kilo-code-surge.new.languageCommitMessage": {
           "type": "string",
           "default": "sync",
           "description": "Language used for AI-generated commit messages. Choose 'sync' to follow the Kilo Code UI language, or select a specific language.",
@@ -1024,17 +1024,17 @@
             "فارسی"
           ]
         },
-        "kilo-code.new.model.providerID": {
+        "kilo-code-surge.new.model.providerID": {
           "type": "string",
           "default": "kilo",
           "description": "Default model provider ID for new sessions"
         },
-        "kilo-code.new.model.modelID": {
+        "kilo-code-surge.new.model.modelID": {
           "type": "string",
           "default": "kilo-auto/free",
           "description": "Default model ID for new sessions"
         },
-        "kilo-code.new.autocomplete.model": {
+        "kilo-code-surge.new.autocomplete.model": {
           "type": "string",
           "enum": [
             "mistralai/codestral-2508",
@@ -1054,7 +1054,7 @@
           ],
           "description": "Model to use for inline autocomplete suggestions. If unset, the recommended default is used."
         },
-        "kilo-code.new.autocomplete.provider": {
+        "kilo-code-surge.new.autocomplete.provider": {
           "type": "string",
           "enum": [
             "kilo",
@@ -1068,64 +1068,64 @@
           ],
           "description": "Provider to use for inline autocomplete suggestions. If unset, Kilo Gateway is used."
         },
-        "kilo-code.new.autocomplete.enableAutoTrigger": {
+        "kilo-code-surge.new.autocomplete.enableAutoTrigger": {
           "type": "boolean",
           "default": true,
           "description": "Enable automatic inline completion suggestions"
         },
-        "kilo-code.new.autocomplete.enableSmartInlineTaskKeybinding": {
+        "kilo-code-surge.new.autocomplete.enableSmartInlineTaskKeybinding": {
           "type": "boolean",
           "default": false,
           "description": "Enable smart inline task keybinding"
         },
-        "kilo-code.new.autocomplete.enableChatAutocomplete": {
+        "kilo-code-surge.new.autocomplete.enableChatAutocomplete": {
           "type": "boolean",
           "default": false,
           "description": "Enable chat textarea autocomplete"
         },
-        "kilo-code.new.agentManager.autoBranchNaming": {
+        "kilo-code-surge.new.agentManager.autoBranchNaming": {
           "type": "boolean",
           "default": true,
           "scope": "application",
           "description": "Automatically name new Agent Manager branches when the conversation describes a clear task. Explicitly named and published branches are never renamed."
         },
-        "kilo-code.new.agentManager.branchPrefix": {
+        "kilo-code-surge.new.agentManager.branchPrefix": {
           "type": "string",
           "default": "",
           "scope": "application",
           "description": "Prefix for automatically named Agent Manager branches, for example 'marius/' or 'feature/'. Explicit branch names are unchanged."
         },
-        "kilo-code.new.agentManager.worktreePool": {
+        "kilo-code-surge.new.agentManager.worktreePool": {
           "type": "boolean",
           "default": true,
           "scope": "application",
           "description": "Pre-warm a ready worktree in the background so new Agent Manager sessions start faster. Uses extra disk space equal to one checkout per open project. Turn off to create worktrees only on demand."
         },
-        "kilo-code.new.experimental.agentManagerSplash": {
+        "kilo-code-surge.new.experimental.agentManagerSplash": {
           "type": "boolean",
           "default": false,
           "scope": "application",
           "description": "Try the new Agent Manager introduction with workflow examples. Applies immediately."
         },
-        "kilo-code.new.experimental.browserAutomation": {
+        "kilo-code-surge.new.experimental.browserAutomation": {
           "type": "boolean",
           "default": false,
           "scope": "application",
           "description": "Enable the experimental Integrated Browser panel and browser_open tool in Agent Manager."
         },
-        "kilo-code.new.experimental.conversationPromptHistory": {
+        "kilo-code-surge.new.experimental.conversationPromptHistory": {
           "type": "boolean",
           "default": false,
           "scope": "application",
           "description": "Keep the prompt input history (ArrowUp/ArrowDown recall) separate for each conversation instead of sharing one history across all conversations."
         },
-        "kilo-code.new.experimental.claudeMigration": {
+        "kilo-code-surge.new.experimental.claudeMigration": {
           "type": "boolean",
           "default": false,
           "scope": "application",
           "description": "Experimental one-time import of supported global Claude Code instructions, simple skills, and disabled MCP definitions into Kilo. The original Claude files are never changed."
         },
-        "kilo-code.new.agentManager.terminalButtonDestination": {
+        "kilo-code-surge.new.agentManager.terminalButtonDestination": {
           "type": "string",
           "scope": "application",
           "default": "agentManager",
@@ -1139,62 +1139,62 @@
           ],
           "description": "Default destination for the Agent Manager terminal button and Focus Terminal keyboard shortcut. The terminal button's dropdown remembers its own choice per Agent Manager panel; this setting only applies to panels that never picked one."
         },
-        "kilo-code.new.indexing.showButtonWhenDisabled": {
+        "kilo-code-surge.new.indexing.showButtonWhenDisabled": {
           "type": "boolean",
           "default": true,
           "scope": "application",
           "description": "Show the codebase indexing button below the prompt while indexing is disabled."
         },
-        "kilo-code.new.claudeCodeCompat": {
+        "kilo-code-surge.new.claudeCodeCompat": {
           "type": "boolean",
           "default": false,
           "description": "Load CLAUDE.md instructions and skills from your Claude Code configuration directory into Kilo sessions. Enable this if you want Kilo to use your Claude Code instructions and skills."
         },
-        "kilo-code.new.extraCaCerts": {
+        "kilo-code-surge.new.extraCaCerts": {
           "type": "string",
           "default": "",
           "description": "Absolute path to a PEM file containing extra CA certificates to trust when the Kilo backend makes HTTPS requests (sets NODE_EXTRA_CA_CERTS on the CLI process). Use this if you're behind a corporate proxy that performs SSL inspection. Leave empty to rely on the OS trust store."
         },
-        "kilo-code.new.autoApprove.enabled": {
+        "kilo-code-surge.new.autoApprove.enabled": {
           "type": "boolean",
           "default": false,
           "description": "Start Kilo Code with the main auto-approve toggle enabled. When enabled, permission prompts are approved automatically. Sandbox escalation prompts are always excluded."
         },
-        "kilo-code.new.maxCost": {
+        "kilo-code-surge.new.maxCost": {
           "type": "number",
           "default": 0,
           "minimum": 0,
           "description": "Show a non-blocking alert when a session exceeds this USD amount. Use whole dollars; set to 0 to disable."
         },
-        "kilo-code.new.fontSize": {
+        "kilo-code-surge.new.fontSize": {
           "type": "number",
           "default": 13,
           "minimum": 10,
           "maximum": 24,
           "description": "Font size in pixels for the Kilo Code webview UI."
         },
-        "kilo-code.new.browserAutomation.enabled": {
+        "kilo-code-surge.new.browserAutomation.enabled": {
           "type": "boolean",
           "default": false,
           "description": "Enable browser automation powered by Playwright. When enabled, the AI agent can interact with web pages in a visible Chrome window."
         },
-        "kilo-code.new.browserAutomation.useSystemChrome": {
+        "kilo-code-surge.new.browserAutomation.useSystemChrome": {
           "type": "boolean",
           "default": true,
           "description": "Use your system's installed Chrome browser instead of downloading a separate Chromium instance."
         },
-        "kilo-code.new.browserAutomation.headless": {
+        "kilo-code-surge.new.browserAutomation.headless": {
           "type": "boolean",
           "default": false,
           "description": "Run browser automation in headless mode (no visible window). When disabled, you can watch the agent interact with the browser."
         },
-        "kilo-code.new.agentManager.browser.useSystemChrome": {
+        "kilo-code-surge.new.agentManager.browser.useSystemChrome": {
           "type": "boolean",
           "default": true,
           "scope": "application",
           "description": "Use system-installed Google Chrome for the Integrated Browser. Disable only when a compatible Playwright Chromium browser is already installed."
         },
-        "kilo-code.new.agentManager.browser.openLinksIn": {
+        "kilo-code-surge.new.agentManager.browser.openLinksIn": {
           "type": "string",
           "enum": [
             "external",
@@ -1208,22 +1208,22 @@
           "scope": "application",
           "description": "Choose where web links open from Kilo chats. Requires the experimental Integrated Browser."
         },
-        "kilo-code.new.attention.enabled": {
+        "kilo-code-surge.new.attention.enabled": {
           "type": "boolean",
           "default": false,
           "description": "Play sounds when sessions complete, error, or need input"
         },
-        "kilo-code.new.attention.notifications": {
+        "kilo-code-surge.new.attention.notifications": {
           "type": "boolean",
           "default": false,
           "description": "Show VS Code notifications when Kilo completes a task or needs input. Notifications are suppressed while a Kilo panel is active."
         },
-        "kilo-code.new.attention.OSNotifications": {
+        "kilo-code-surge.new.attention.OSNotifications": {
           "type": "boolean",
           "default": false,
           "description": "Show native OS notification alerts when Kilo completes a task or needs input while VS Code is not active."
         },
-        "kilo-code.new.attention.sound": {
+        "kilo-code-surge.new.attention.sound": {
           "type": "string",
           "default": "default",
           "enum": [
@@ -1277,37 +1277,37 @@
           ],
           "description": "Use different sounds for completion, input, and errors, or choose one sound for every event"
         },
-        "kilo-code.new.showTaskTimeline": {
+        "kilo-code-surge.new.showTaskTimeline": {
           "type": "boolean",
           "default": true,
           "description": "Show the task timeline graph in the chat header"
         },
-        "kilo-code.new.showShortcutHints": {
+        "kilo-code-surge.new.showShortcutHints": {
           "type": "boolean",
           "default": true,
           "description": "Show the keyboard shortcut that fits what you do now in the empty prompt, for example how to add selected code or return to the prompt."
         },
-        "kilo-code.new.showTokenThroughput": {
+        "kilo-code-surge.new.showTokenThroughput": {
           "type": "boolean",
           "default": true,
           "description": "Show tokens-per-second (prompt-processing / text-generation) badges on assistant messages and the task header"
         },
-        "kilo-code.new.showAutoApprovalReason": {
+        "kilo-code-surge.new.showAutoApprovalReason": {
           "type": "boolean",
           "default": true,
           "description": "Show a line on tool calls explaining why they were auto-approved (matched rule, agent default, YOLO mode, etc.)"
         },
-        "kilo-code.new.chat.shiftTabCyclesVariant": {
+        "kilo-code-surge.new.chat.shiftTabCyclesVariant": {
           "type": "boolean",
           "default": true,
           "description": "Cycle through reasoning effort variants with Shift+Tab in prompt inputs. Disable to keep Shift+Tab for keyboard focus navigation."
         },
-        "kilo-code.new.agentManager.pushFixes": {
+        "kilo-code-surge.new.agentManager.pushFixes": {
           "type": "boolean",
           "default": true,
           "description": "Agent Manager: when you send pull request CI failures or review comments to the agent, or update a worktree from its base, ask the agent to commit and push so the pull request updates. Permission prompts still apply. Disable to keep commits manual."
         },
-        "kilo-code.new.agentWorkStyle": {
+        "kilo-code-surge.new.agentWorkStyle": {
           "type": "string",
           "scope": "application",
           "default": "unset",
@@ -1325,12 +1325,12 @@
           ],
           "description": "Preferred agent work style. Set to Unset to show the onboarding flow again."
         },
-        "kilo-code.new.diff.renderMarkdown": {
+        "kilo-code-surge.new.diff.renderMarkdown": {
           "type": "boolean",
           "default": false,
           "description": "Render Markdown files in Kilo diff viewers by default. Toggle this from a Markdown file header in the diff viewer."
         },
-        "kilo-code.new.diff.style": {
+        "kilo-code-surge.new.diff.style": {
           "type": "string",
           "enum": [
             "unified",

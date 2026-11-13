@@ -22,8 +22,6 @@ Docs read (2026-11-13):
 
 ## Batch-eligible models
 
-See the [batch quickstart](https://openrouter.ai/docs/batch-quickstart) section on models with a batch variant (otherwise **400**). Catalog field `batch` / `openrouterBatch` when models.dev exposes it; else [`batch-models.ts`](./batch-models.ts) allowlist and synthetic `*-batch` picker ids.
+OpenRouter **chat** models are loaded live from `GET /api/v1/models` (`output_modalities=text`, `endpoints=/api/v1/chat/completions`) when `OPENROUTER_API_KEY` is set — see [`catalog.ts`](./catalog.ts).
 
-Official docs refer to a **batch models list** (models without a batch variant return **400**).
-We mark models with `openrouterBatch: true` via catalog metadata when present, else
-[`batch-models.ts`](./batch-models.ts) allowlist + synthetic `-batch` picker ids sharing `api.id`.
+Batch picker twins use OpenRouter `endpoints` (`/api/v1/batches`) or `batch` metadata from that feed; synthetic `*-batch` ids are added in [`batch-models.ts`](./batch-models.ts).

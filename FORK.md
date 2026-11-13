@@ -18,7 +18,13 @@ Surge-specific code lives under `packages/opencode/src/kilocode/` and in marked 
 
 ## Install
 
-Build from this repository (see [CONTRIBUTING.md](./CONTRIBUTING.md)) or install release artifacts from AL4AL when published. Official Marketplace / npm packages from Kilo-Org are **upstream Kilo Code**, not Surge, unless AL4AL publishes a separate extension id.
+Build from this repository (see [CONTRIBUTING.md](./CONTRIBUTING.md)) or install a Surge VSIX. Official Marketplace packages from Kilo-Org are **upstream Kilo Code** (`kilocode.kilo-code`), not Surge.
+
+| Surge VS Code extension id | Publisher | Package name |
+|---|---|---|
+| `al4al.kilo-code-surge` | `al4al` | `kilo-code-surge` |
+
+You can install Surge alongside upstream Kilo Code; settings, commands, and storage are namespaced separately (`kilo-code-surge.*`).
 
 ## Contributing
 

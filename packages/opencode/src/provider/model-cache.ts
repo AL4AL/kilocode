@@ -12,6 +12,7 @@ import * as Log from "@opencode-ai/core/util/log"
 import { LayerNode } from "@opencode-ai/core/effect/layer-node"
 import { AppNodeBuilder } from "@opencode-ai/core/effect/app-node-builder" // kilocode_change
 import { httpClient } from "@opencode-ai/core/effect/app-node-platform" // kilocode_change
+import { catalogQuery, fromList, type OpenRouterList } from "@/kilocode/openrouter/catalog" // kilocode_change
 
 type Models = Provider["models"]
 type KiloOptions = NonNullable<Parameters<typeof fetchKiloModels>[0]>
@@ -100,6 +101,29 @@ export const layer: Layer.Layer<
       modalities: { input: ["text", "image"], output: ["text"] },
     })
 
+    const fetchOpenRouterModels = Effect.fn("ModelCache.fetchOpenRouterModels")(function* (options: Options) {
+      if (!options.apiKey) {
+        log.debug("no API key for openrouter, skipping model fetch")
+        return {}
+      }
+
+      const response = yield* HttpClientRequest.get(catalogQuery()).pipe(
+        HttpClientRequest.acceptJson,
+        HttpClientRequest.bearerToken(options.apiKey),
+        http.execute,
+        Effect.timeout("30 seconds"),
+      )
+      if (response.status < 200 || response.status >= 300) {
+        log.error("openrouter model fetch failed", { status: response.status })
+        return {}
+      }
+
+      const json = (yield* HttpClientResponse.schemaBodyJson(Schema.Unknown)(response)) as OpenRouterList
+      const models = fromList(json)
+      log.info("openrouter models loaded", { count: Object.keys(models).length })
+      return models
+    })
+
     const fetchApertisModels = Effect.fn("ModelCache.fetchApertisModels")(function* (options: Options) {
       const baseURL = options.baseURL ?? APERTIS_BASE_URL
       if (!options.apiKey) {
@@ -124,7 +148,7 @@ export const layer: Layer.Layer<
     })
 
     const authOptions = Effect.fn("ModelCache.authOptions")(function* (providerID: string) {
-      if (providerID !== "kilo" && providerID !== "apertis") return {}
+      if (providerID !== "kilo" && providerID !== "apertis" && providerID !== "openrouter") return {}
       const config = yield* cfg.get()
       const options: Options = {}
 
@@ -156,11 +180,22 @@ export const layer: Layer.Layer<
         })
       }
 
+      if (providerID === "openrouter") {
+        const item = config.provider?.[providerID]
+        if (item?.options?.apiKey) options.apiKey = item.options.apiKey
+        const info = yield* auth.get(providerID)
+        if (info?.type === "api") options.apiKey = info.key
+        if (process.env.OPENROUTER_API_KEY) options.apiKey = process.env.OPENROUTER_API_KEY
+        log.debug("openrouter auth options resolved", { providerID, hasKey: !!options.apiKey })
+      }
+
       return options
     })
 
     const fetchModels = (providerID: string, options: Options): Effect.Effect<Result, unknown> => {
       if (providerID === "kilo") return kilo.fetch(options)
+      if (providerID === "openrouter")
+        return fetchOpenRouterModels(options).pipe(Effect.map((models) => ({ models })))
       if (providerID === "apertis") return fetchApertisModels(options).pipe(Effect.map((models) => ({ models })))
       log.debug("provider not implemented", { providerID })
       return Effect.succeed({ models: {} })
@@ -188,6 +223,7 @@ export const layer: Layer.Layer<
         return JSON.stringify([providerID, options?.baseURL, options?.kilocodeOrganizationId, options?.kilocodeToken])
       }
       if (providerID === "apertis") return JSON.stringify([providerID, options?.baseURL, options?.apiKey])
+      if (providerID === "openrouter") return JSON.stringify([providerID, options?.apiKey])
       return providerID
     }
 
