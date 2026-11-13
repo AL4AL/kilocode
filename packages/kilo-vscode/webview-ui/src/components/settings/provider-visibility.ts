@@ -34,8 +34,15 @@ export function canChangeProviderKey(
   )
 }
 
+/** Provider ids that require an explicit API key in this extension before showing as connected. */
+const API_KEY_ONLY = new Set(["openrouter"])
+
 export function visibleConnectedIds(connected: string[], authStates: Record<string, ProviderAuthState>) {
-  return connected.filter((id) => id !== KILO_PROVIDER_ID || authStates[KILO_PROVIDER_ID] !== undefined)
+  return connected.filter((id) => {
+    if (id === KILO_PROVIDER_ID) return authStates[KILO_PROVIDER_ID] !== undefined
+    if (API_KEY_ONLY.has(id)) return authStates[id] !== undefined
+    return true
+  })
 }
 
 export function disabledProviderOptions(providers: Record<string, Provider>, disabled: string[]) {

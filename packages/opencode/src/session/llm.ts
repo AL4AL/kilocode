@@ -222,6 +222,7 @@ const live: Layer.Layer<
           userMessageID: input.user.id,
           model: input.model,
           auth: info,
+          provider: item, // kilocode_change - batch key from auth.json and merged provider options
           prepared,
           abort: input.abort,
         })

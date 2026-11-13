@@ -78,6 +78,11 @@ describe("visibleConnectedIds", () => {
 
     expect(ids).toEqual(["anthropic"])
   })
+
+  it("hides OpenRouter until this extension stores an API key", () => {
+    expect(visibleConnectedIds(["openrouter", "anthropic"], {})).toEqual(["anthropic"])
+    expect(visibleConnectedIds(["openrouter"], { openrouter: "api" })).toEqual(["openrouter"])
+  })
 })
 
 describe("disabledProviderOptions", () => {

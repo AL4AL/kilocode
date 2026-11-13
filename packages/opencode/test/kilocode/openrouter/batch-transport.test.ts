@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test"
 import * as Stream from "effect/Stream"
 import { Effect } from "effect"
-import { OpenRouterBatchTransport } from "@/kilocode/openrouter/batch-transport"
+import { OpenRouterBatchTransport, resolveOpenRouterKey } from "@/kilocode/openrouter/batch-transport"
 import { createBatchFetch } from "../../lib/openrouter-batch-server"
 import type { Provider } from "@/provider/provider"
 
@@ -146,5 +146,16 @@ describe("batch transport stream", () => {
       })(),
     ).rejects.toThrow("duplicate POST")
     OpenRouterBatchStore.clear("kilo-user-1")
+  })
+})
+
+describe("resolveOpenRouterKey", () => {
+  test("reads provider options when auth is missing", () => {
+    expect(
+      resolveOpenRouterKey({
+        provider: { options: { apiKey: " sk-or-1 " } },
+        env: {},
+      }),
+    ).toBe("sk-or-1")
   })
 })

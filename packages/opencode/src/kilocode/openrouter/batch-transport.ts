@@ -14,19 +14,29 @@ import { OpenRouterBatchActive } from "./batch-active"
 import { OpenRouterBatchStore } from "./batch-store"
 import { setWaitingBatch, clearWaitingBatch } from "./batch-status"
 
+type KeyProvider = { key?: string; options?: Record<string, unknown> }
+
 export type BatchStreamInput = {
   sessionID: SessionID
   userMessageID: MessageID
   model: Provider.Model
   auth: Auth.Info | undefined
+  provider?: KeyProvider
   prepared: Prepared
   abort: AbortSignal
   fetch?: typeof fetch
 }
 
-function token(auth: Auth.Info | undefined, env: Record<string, string | undefined>) {
-  if (auth?.type === "api" && auth.key) return auth.key
-  return env.OPENROUTER_API_KEY
+export function resolveOpenRouterKey(input: {
+  auth?: Auth.Info
+  provider?: KeyProvider
+  env?: Record<string, string | undefined>
+}) {
+  if (input.auth?.type === "api" && input.auth.key) return input.auth.key
+  const opt = input.provider?.options?.apiKey
+  if (typeof opt === "string" && opt.trim()) return opt.trim()
+  if (typeof input.provider?.key === "string" && input.provider.key.trim()) return input.provider.key.trim()
+  return input.env?.OPENROUTER_API_KEY
 }
 
 function completionBody(input: BatchStreamInput) {
@@ -131,8 +141,7 @@ async function* runPoll(input: BatchStreamInput, tokenValue: string) {
 
 export namespace OpenRouterBatchTransport {
   export function stream(input: BatchStreamInput): Stream.Stream<LLMEvent, unknown> {
-  const env = process.env
-  const key = token(input.auth, env)
+  const key = resolveOpenRouterKey({ auth: input.auth, provider: input.provider, env: process.env })
   if (!key) return Stream.fail(new Error("OpenRouter API key required for batch models"))
     return Stream.fromAsyncIterable(runPoll(input, key), (e) => (e instanceof Error ? e : new Error(String(e))))
   }

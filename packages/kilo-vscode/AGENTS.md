@@ -152,6 +152,8 @@ Surge does **not** load Kilo-Org cloud marketing notification carousels (`kilo-p
 
 **Activity bar ids (Surge):** container `kilo-code-surge-ActivityBar`, view `kilo-code-surge.SidebarProvider` (upstream was `kilo-code-ActivityBar` / `kilo-code.SidebarProvider`). Workbench layout from upstream does not transfer; use **View: Reset View Locations** or right-click the activity bar → **Kilo+ Surge** if the icon landed in the overflow menu.
 
+**Isolated CLI storage (required):** `ServerManager` must set `XDG_*_HOME` under `context.globalStorageUri/kilo-cli/` when spawning `kilo serve`. Do **not** use shared `~/.local/share/kilo` — that is what upstream `kilocode.kilo-code` uses via the same CLI binary, and it leaks `auth.json`, sessions, and provider “connected” state across extensions.
+
 ## Architecture
 
 ### Extension ↔ CLI Backend

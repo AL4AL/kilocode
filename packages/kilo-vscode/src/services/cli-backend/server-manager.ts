@@ -6,7 +6,7 @@ import * as path from "path"
 import * as vscode from "vscode"
 import { resolveLocalBwrapEnv, resolveTreeSitterEnv } from "./cli-resources"
 import { t } from "./i18n"
-import { ensureServerCwd, scanServerPort } from "./server-utils"
+import { ensureCliXdgDirs, ensureServerCwd, resolveExtensionCliXdg, scanServerPort } from "./server-utils"
 
 export interface ServerInstance {
   port: number
@@ -107,8 +107,11 @@ export class ServerManager {
       // Pin cwd so the CLI doesn't inherit the extension host's cwd ("/" under F5 debug)
       // or "$HOME" in empty VS Code windows.
       const folders = vscode.workspace.workspaceFolders
-      const spawnCwd = resolveServerCwd(folders, this.context.globalStorageUri.fsPath)
+      const storage = this.context.globalStorageUri.fsPath
+      const spawnCwd = resolveServerCwd(folders, storage)
       ensureServerCwd(spawnCwd)
+      const xdg = resolveExtensionCliXdg(storage)
+      ensureCliXdgDirs(xdg)
       const indexingEnv = resolveIndexingEnv(folders)
       const localCli =
         this.context.extensionMode === vscode.ExtensionMode.Development ||
@@ -132,6 +135,7 @@ export class ServerManager {
           NODE_USE_SYSTEM_CA: "1",
           ...(extraCaCerts && { NODE_EXTRA_CA_CERTS: extraCaCerts }),
           ...(!proxyStrictSSL && { NODE_TLS_REJECT_UNAUTHORIZED: "0" }),
+          ...xdg,
           ...resolveManagedServerEnv(process.env),
           // VS Code's http.proxy / http.noProxy settings are not reflected in
           // process.env, so spawned children bypass the user's configured proxy

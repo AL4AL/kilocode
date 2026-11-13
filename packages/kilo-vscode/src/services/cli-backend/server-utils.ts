@@ -1,4 +1,20 @@
 import * as fs from "fs"
+import * as path from "path"
+
+/** Per-extension CLI state under VS Code globalStorage (auth.json, sessions, cache). */
+export function resolveExtensionCliXdg(globalStorageFsPath: string) {
+  const root = path.join(globalStorageFsPath, "kilo-cli")
+  return {
+    XDG_DATA_HOME: path.join(root, "data"),
+    XDG_CONFIG_HOME: path.join(root, "config"),
+    XDG_STATE_HOME: path.join(root, "state"),
+    XDG_CACHE_HOME: path.join(root, "cache"),
+  }
+}
+
+export function ensureCliXdgDirs(xdg: ReturnType<typeof resolveExtensionCliXdg>) {
+  for (const dir of Object.values(xdg)) fs.mkdirSync(dir, { recursive: true })
+}
 
 export function ensureServerCwd(dir: string): void {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
