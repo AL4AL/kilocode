@@ -1,6 +1,6 @@
 export type Activity = "waiting" | "error" | "retry" | "busy" | "done" | "scheduled" | "idle"
 
-export type Status = "idle" | "busy" | "retry" | "offline"
+export type Status = "idle" | "busy" | "retry" | "offline" | "waiting_batch"
 
 export interface ActivityInput {
   status?: Status
@@ -16,7 +16,7 @@ export function activity(input: ActivityInput): Activity {
   if (input.blocked) return "waiting"
   if (input.errored || input.status === "offline") return "error"
   if (input.status === "retry") return "retry"
-  if (input.status === "busy") return "busy"
+  if (input.status === "busy" || input.status === "waiting_batch") return "busy"
   if (input.finished) return "done"
   if (input.scheduled) return "scheduled"
   return "idle"

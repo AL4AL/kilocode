@@ -16,6 +16,7 @@ import type { EventV2 } from "@opencode-ai/core/event"
 import { Interrupted } from "@opencode-ai/schema/kilocode/session-drain"
 import { KiloSessionMessageOrder } from "@/kilocode/session/message-order"
 import { KiloSessionPromptQueue } from "@/kilocode/session/prompt-queue"
+import { OpenRouterBatchActive } from "@/kilocode/openrouter/batch-active" // kilocode_change
 import { KiloSessionTurn } from "@/kilocode/session/turn"
 import { Permission } from "@/permission"
 import { PermissionProvenance } from "@/kilocode/permission/provenance"
@@ -182,6 +183,9 @@ export namespace KiloSessionPrompt {
           yield* KiloSessionPromptQueue.cancel(sessionID)
           PlanFollowup.abort(sessionID)
           yield* abortIntakes(sessionID)
+          yield* Effect.sync(() => {
+            void OpenRouterBatchActive.cancelTurn(sessionID)
+          }) // kilocode_change
           yield* input.cancel(sessionID, { background: input.scope !== "session" })
         })
 

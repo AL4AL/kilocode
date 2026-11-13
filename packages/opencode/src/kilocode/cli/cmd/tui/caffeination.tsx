@@ -28,7 +28,9 @@ export function useCaffeination() {
   const [waking, setWaking] = createSignal<ReadonlySet<string>>(new Set())
   const working = createMemo(
     () =>
-      Object.values(sync.data.session_status).some((status) => status.type === "busy" || status.type === "retry") ||
+      Object.values(sync.data.session_status).some(
+        (status) => status.type === "busy" || status.type === "retry" || status.type === "waiting_batch",
+      ) ||
       waking().size > 0,
   )
 

@@ -164,6 +164,9 @@ describe("resolveDerivedSessionStatus", () => {
     expect(resolveDerivedSessionStatus({ hasPermission: false, hasQuestion: false, statusType: "idle" })).toBe("idle")
     expect(resolveDerivedSessionStatus({ hasPermission: false, hasQuestion: false, statusType: "busy" })).toBe("busy")
     expect(resolveDerivedSessionStatus({ hasPermission: false, hasQuestion: false, statusType: "retry" })).toBe("retry")
+    expect(resolveDerivedSessionStatus({ hasPermission: false, hasQuestion: false, statusType: "waiting_batch" })).toBe(
+      "busy",
+    )
     expect(resolveDerivedSessionStatus({ hasPermission: false, hasQuestion: false, statusType: "offline" })).toBe(
       "retry",
     )

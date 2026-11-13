@@ -639,6 +639,20 @@ export function patchAgents(
     deprecated: true,
   }
 
+  agents.chat = {
+    name: "chat",
+    description: "Plain model conversation without tools, skills, or project context.",
+    prompt: "",
+    options: {},
+    permission: Permission.merge(
+      defaults,
+      Permission.fromConfig({ "*": "deny" }),
+      user,
+    ),
+    mode: "primary",
+    native: true,
+  }
+
   // Add ask agent
   const guard = askGuard(kilo.mcpRules, enabled)
   agents.ask = {

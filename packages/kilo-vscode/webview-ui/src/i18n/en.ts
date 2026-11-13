@@ -582,7 +582,7 @@ export const dict = {
   "deviceAuth.toast.codeCopied": "Code copied to clipboard",
   "deviceAuth.toast.errorCopied": "Error copied to clipboard",
   "deviceAuth.status.initiating": "Starting login...",
-  "deviceAuth.title": "Sign in to Kilo Code",
+  "deviceAuth.title": "Sign in to Kilo Code Surge",
   "deviceAuth.step1": "Step 1: Open this URL",
   "deviceAuth.action.copyUrl": "Copy URL",
   "deviceAuth.action.openBrowser": "Open Browser",
@@ -605,7 +605,7 @@ export const dict = {
 
   "profile.title": "Profile",
   "profile.notLoggedIn": "Not logged in",
-  "profile.action.login": "Login with Kilo Code",
+  "profile.action.login": "Login with Kilo+",
   "profile.balance.title": "Balance",
   "profile.balance.refresh": "Refresh balance",
   "profile.usage.title": "Plans & usage",
@@ -708,10 +708,10 @@ export const dict = {
   "settings.indexing.tuning.description": "Advanced search and batching parameter.",
   "settings.experimental.title": "Experimental",
   "settings.language.title": "Language",
-  "settings.aboutKiloCode.title": "About Kilo Code",
+  "settings.aboutKiloCode.title": "About Kilo Code Surge (Kilo+)",
 
   "session.messages.welcome":
-    "Kilo Code is an AI coding assistant. Ask it to build features, fix bugs, or explain your codebase.",
+    "Kilo Code Surge (Kilo+) is built on Kilo Code. Ask it to build features, fix bugs, or explain your codebase.",
   "session.workspaceScope.description": "Kilo chat uses only “{{folder}}”, the first folder in this workspace.",
   "session.workspaceScope.alternatives":
     "To work with another folder, open it in its own window or add it as a project in Agent Manager.",
@@ -730,6 +730,11 @@ export const dict = {
   "session.status.retry": "Retrying…",
   "session.status.working": "Working...",
   "session.status.offline": "Network disconnected — reconnecting...",
+  "session.status.waitingBatch": "Waiting on OpenRouter batch ({{batchId}}) · {{modelId}}",
+  "session.status.waitingBatchResume":
+    "This session has a batch still processing on OpenRouter. Results will appear when the batch completes.",
+  "composer.reasoningBudgetWarning":
+    "High reasoning effort may leave too little room for a reply on this model. Lower reasoning or compact the session before sending.",
   "session.outcome.incomplete": "Turn ended with {{count}} to-dos remaining.",
   "session.outcome.limit": "Response reached its output limit and may be incomplete.",
   "session.outcome.unknown": "Response ended without a finish reason and may be incomplete.",

@@ -7,7 +7,7 @@ type Session = {
 }
 
 type Status = {
-  type: "idle" | "retry" | "busy" | "offline" | "scheduled"
+  type: "idle" | "retry" | "busy" | "offline" | "scheduled" | "waiting_batch"
 }
 
 type Message = {

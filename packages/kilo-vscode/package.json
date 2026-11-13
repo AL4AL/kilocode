@@ -1,7 +1,7 @@
 {
   "name": "kilo-code",
-  "displayName": "Kilo Code: AI Coding Agent, Copilot, and Autocomplete",
-  "description": "Open Source AI coding agent that generates code from natural language, automates tasks, and runs terminal commands. Features inline autocomplete, browser automation, automated refactoring, and custom modes for planning, coding, and debugging. Supports 500+ AI models including Claude (Anthropic), Gemini, Grok, GPT, Codex and GLM.",
+  "displayName": "Kilo Code Surge (Kilo+): AI Coding Agent",
+  "description": "Kilo Code Surge (Kilo+) — AL4AL distribution built on Kilo Code. Same open-source AI coding agent with Surge extras (OpenRouter batch models, Chat agent, and integrations ahead of upstream).",
   "version": "7.8.28",
   "icon": "assets/icons/logo-outline-black.png",
   "galleryBanner": {
@@ -11,7 +11,7 @@
   "publisher": "kilocode",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Kilo-Org/kilocode.git",
+    "url": "https://github.com/AL4AL/kilocode.git",
     "directory": "packages/kilo-vscode"
   },
   "engines": {
@@ -19,7 +19,7 @@
   },
   "license": "MIT",
   "author": {
-    "name": "Kilo Code"
+    "name": "AL4AL (Kilo Code Surge)"
   },
   "categories": [
     "AI",
@@ -32,7 +32,10 @@
   "keywords": [
     "kilo",
     "Kilo Code",
+    "Kilo+",
+    "Kilo Code Surge",
     "kilocode",
+    "surge",
     "ai",
     "agent",
     "agentic",

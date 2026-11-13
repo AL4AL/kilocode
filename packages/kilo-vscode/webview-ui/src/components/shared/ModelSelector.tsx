@@ -1120,6 +1120,16 @@ export const ModelSelectorBase: Component<ModelSelectorBaseProps> = (props) => {
                                       </span>
                                     </Tooltip>
                                   </Show>
+                                  <Show when={model.openrouterBatch}>
+                                    <Tooltip
+                                      value={language.t("composer.reasoningBudgetWarning")}
+                                      placement="top"
+                                    >
+                                      <span class="model-selector-data-badge">
+                                        <Tag data-variant="member">Batch</Tag>
+                                      </span>
+                                    </Tooltip>
+                                  </Show>
                                   <Show when={isFree(model) || hasByok(model) || isDataCollectedModel(model)}>
                                     <span class="model-selector-free-data">
                                       <Show when={isFree(model) && !hasByok(model)}>

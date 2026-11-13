@@ -914,7 +914,15 @@ export const SessionProvider: ParentComponent = (props) => {
         break
 
       case "sessionStatus":
-        handleSessionStatus(message.sessionID, message.status, message.attempt, message.message, message.next)
+        handleSessionStatus(
+          message.sessionID,
+          message.status,
+          message.attempt,
+          message.message,
+          message.next,
+          message.batchId,
+          message.modelId,
+        )
         break
 
       case "sessionTurnClosed":
@@ -1517,6 +1525,8 @@ export const SessionProvider: ParentComponent = (props) => {
     attempt?: number,
     message?: string,
     next?: number,
+    batchId?: string,
+    modelId?: string,
   ) {
     if (removedSessions.has(sessionID)) return
     const shouldAbort = aborts.update(sessionID, newStatus)
@@ -1527,9 +1537,11 @@ export const SessionProvider: ParentComponent = (props) => {
         ? { type: "retry", attempt: attempt ?? 0, message: message ?? "", next: next ?? 0 }
         : newStatus === "offline"
           ? { type: "offline", message: message ?? "" }
-          : { type: newStatus }
+          : newStatus === "waiting_batch"
+            ? { type: "waiting_batch", batchId: batchId ?? "", modelId: modelId ?? "" }
+            : { type: newStatus }
     setStatusMap(sessionID, info)
-    if (newStatus === "busy" || newStatus === "retry") clearClose(sessionID)
+    if (newStatus === "busy" || newStatus === "retry" || newStatus === "waiting_batch") clearClose(sessionID)
     if (prev === "idle" && newStatus !== "idle") startTiming(sessionID)
     if (newStatus === "idle") {
       if (!goal(sessionID))

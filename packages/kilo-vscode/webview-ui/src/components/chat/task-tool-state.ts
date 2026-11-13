@@ -37,7 +37,11 @@ export function taskAvatarStatus(
   tool: string | undefined,
   status: Record<string, SessionStatusInfo>,
 ) {
-  if (id && (status[id]?.type === "busy" || status[id]?.type === "retry")) return "running" as const
+  if (
+    id &&
+    (status[id]?.type === "busy" || status[id]?.type === "retry" || status[id]?.type === "waiting_batch")
+  )
+    return "running" as const
   if (taskRunning(tool)) return "running" as const
   return undefined
 }

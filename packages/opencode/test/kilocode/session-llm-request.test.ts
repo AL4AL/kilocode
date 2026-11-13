@@ -55,7 +55,7 @@ function agent(name: string): Agent.Info {
     mode: "primary",
     options: {},
     permission: [],
-    prompt: `${name} generation prompt`,
+    prompt: name === "chat" ? "" : `${name} generation prompt`,
   }
 }
 
@@ -127,6 +127,14 @@ describe("Kilo persona in generated metadata requests", () => {
 
     expect(result.system[0]).toContain(SystemPrompt.soul())
     expect(oauth.params.options.instructions).toContain(SystemPrompt.soul())
+  })
+
+  test("chat agent strips system, tools, and soul", async () => {
+    const result = await prepare("chat")
+    expect(result.system).toEqual([])
+    expect(Object.keys(result.tools)).toEqual([])
+    expect(result.messages.every((m) => m.role === "user" || m.role === "assistant")).toBe(true)
+    expect(result.messages.some((m) => m.role === "system")).toBe(false)
   })
 })
 

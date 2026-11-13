@@ -1103,6 +1103,12 @@ export type SessionStatus =
       type: "scheduled"
       scheduledAt: string
     }
+  | {
+      type: "waiting_batch"
+      batchId: string
+      customId: string
+      modelId: string
+    }
 
 export type QuestionOption = {
   /**
@@ -2840,6 +2846,7 @@ export type Model = {
       [key: string]: unknown
     }
   }
+  openrouterBatch?: boolean
   recommendedIndex?: number
   prompt?: "codex" | "gemini" | "beast" | "anthropic" | "trinity" | "anthropic_without_todo" | "ling" | "gpt55"
   isFree?: boolean
@@ -5127,7 +5134,6 @@ export type SessionHostWorkspaceProfilePage = {
 
 export type SessionHostWorkspaceProfileDefaultInput = {
   id: string
-  organizationID?: SessionHostOrganizationId
 }
 
 export type SessionHostWorkspaceProfileDefaultResult = {

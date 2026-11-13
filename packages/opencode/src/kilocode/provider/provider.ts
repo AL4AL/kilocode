@@ -39,6 +39,7 @@ export const KILO_BUNDLED_PROVIDERS: Record<string, () => Promise<(options: any)
 // ---------------------------------------------------------------------------
 
 export const KILO_MODEL_SCHEMA_EXTENSIONS = {
+  openrouterBatch: Schema.optional(Schema.Boolean),
   recommendedIndex: optionalOmitUndefined(Schema.Finite),
   prompt: Schema.optional(Schema.Literals(PROMPTS)),
   isFree: Schema.optional(Schema.Boolean),
@@ -63,7 +64,12 @@ export const KILO_MODEL_SCHEMA_EXTENSIONS = {
 // ---------------------------------------------------------------------------
 
 export function patchModelsDevModel(providerID: string, source: any) {
+  const api = typeof source?.id === "string" ? source.id : ""
   return {
+    openrouterBatch:
+      providerID === "openrouter" && (source?.batch === true || source?.openrouterBatch === true || api.endsWith("-batch"))
+        ? true
+        : source?.openrouterBatch,
     variants: providerID === "kilo" ? (source.variants ?? {}) : {},
     recommendedIndex: source.recommendedIndex,
     prompt: source.prompt,

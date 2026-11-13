@@ -29,6 +29,7 @@ import { KiloSession } from "@/kilocode/session"
 import { stripInternalOptions } from "@/kilocode/agent/options"
 import { KilocodeSystemPrompt } from "@/kilocode/system-prompt"
 import { KiloLLM } from "@/kilocode/session/llm"
+import { isChat, chatMessages } from "@/kilocode/session/chat-agent"
 // kilocode_change end
 
 type PrepareInput = {
@@ -68,6 +69,7 @@ const mergeOptions = (target: Record<string, any>, source: Record<string, any> |
   mergeDeep(target, source ?? {}) as Record<string, any>
 
 export const prepare = Effect.fn("LLMRequestPrep.prepare")(function* (input: PrepareInput) {
+  const chatMode = isChat(input.agent.name) // kilocode_change
   const isOpenaiOauth = input.provider.id === "openai" && input.auth?.type === "oauth"
   const includePersona = KilocodeSystemPrompt.shouldIncludePersona(input.agent.name) // kilocode_change
   const system = [
@@ -226,10 +228,12 @@ export const prepare = Effect.fn("LLMRequestPrep.prepare")(function* (input: Pre
     ? (yield* InstanceState.context).project.id
     : undefined
 
-  return {
-    system,
-    messages,
-    tools: Object.fromEntries(Object.entries(tools).toSorted(([a], [b]) => a.localeCompare(b))),
+  const prepared = {
+    system: chatMode ? [] : system, // kilocode_change - chat agent
+    messages: chatMode ? chatMessages(messages) : messages, // kilocode_change
+    tools: chatMode
+      ? ({} as Record<string, Tool>) // kilocode_change
+      : Object.fromEntries(Object.entries(tools).toSorted(([a], [b]) => a.localeCompare(b))),
     params,
     // kilocode_change start - surface provider-level endpoint overrides to message
     // transforms without leaking them into the wire params (options is also params.options)
@@ -268,6 +272,7 @@ export const prepare = Effect.fn("LLMRequestPrep.prepare")(function* (input: Pre
       ...headers,
     },
   }
+  return prepared
 })
 
 function resolveTools(input: Pick<PrepareInput, "tools" | "agent" | "permission" | "user">) {

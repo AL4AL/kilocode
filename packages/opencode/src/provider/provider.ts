@@ -50,6 +50,7 @@ import {
   wrapFirstByte,
 } from "@/kilocode/provider/provider"
 import * as ModelsRefresh from "@/kilocode/provider/models-refresh"
+import { injectBatchPicker } from "@/kilocode/openrouter/batch-models" // kilocode_change
 import { bedrockAuth, providerKey, vertexAuth, vertexCredentials, vertexOptions } from "@/kilocode/provider/cloud-auth"
 // kilocode_change end
 import { ProviderError } from "./error"
@@ -1401,6 +1402,7 @@ export function fromModelsDevProvider(provider: ModelsDev.Provider): Info {
       }
     }
   }
+  injectBatchPicker(models, provider.id) // kilocode_change
   return {
     id: ProviderV2.ID.make(provider.id),
     source: "custom",
@@ -1622,7 +1624,6 @@ const layer = Layer.effect(
                   write: model?.cost?.cache_write ?? existingModel?.cost?.cache.write ?? 0,
                 },
               },
-              options: mergeDeep(existingModel?.options ?? {}, model.options ?? {}),
               limit: {
                 context: model.limit?.context ?? existingModel?.limit?.context ?? 0,
                 input: model.limit?.input ?? existingModel?.limit?.input,
@@ -1633,6 +1634,12 @@ const layer = Layer.effect(
               release_date: model.release_date ?? existingModel?.release_date ?? "",
               // variants: {}, // kilocode_change, moved into patchKiloConfigModel
               ...patchKiloConfigModel(model, existingModel), // kilocode_change
+              ...patchKiloModel(ProviderV2.ID.make(providerID), {
+                id: apiID,
+                batch: (model as { batch?: boolean }).batch,
+                openrouterBatch: (model as { openrouterBatch?: boolean }).openrouterBatch,
+              }), // kilocode_change - config-defined OpenRouter batch models
+              options: mergeDeep(existingModel?.options ?? {}, model.options ?? {}),
             }
             // kilocode_change start
             const baseGenerate = (m: typeof parsedModel) =>

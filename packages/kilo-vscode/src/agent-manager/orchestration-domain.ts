@@ -166,7 +166,9 @@ async function live(input: OverviewInput, sessions: ManagedSession[]) {
       ])
       if (status.error || perms.error || qs.error) unavailable.add(dir)
       for (const [id, value] of Object.entries(status.data ?? {}) as Array<[string, SessionStatus]>) {
-        statuses.set(id, isRunningStatus(value.type) ? value.type : "idle")
+        const mapped: Activity =
+          value.type === "waiting_batch" || value.type === "scheduled" ? "busy" : value.type
+        statuses.set(id, isRunningStatus(value.type) ? mapped : "idle")
       }
       for (const value of perms.data ?? []) permissions.add(value.sessionID)
       for (const value of qs.data ?? []) questions.add(value.sessionID)

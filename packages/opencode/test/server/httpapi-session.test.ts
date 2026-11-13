@@ -1224,4 +1224,71 @@ describe("session HttpApi", () => {
       }),
     { git: true, config: { formatter: false, lsp: false } },
   )
+
+  // kilocode_change start - drop queued user message while session is waiting on OpenRouter batch
+  it.live(
+    "drops queued message while session waiting_batch",
+    () =>
+      Effect.gen(function* () {
+        const { installBatchMock, openRouterProviderConfig } = yield* Effect.promise(
+          () => import("../kilocode/openrouter/batch-integration-harness"),
+        )
+        const restore = installBatchMock({
+          statuses: Array.from({ length: 40 }, () => ({
+            status: "in_progress" as const,
+            results: null,
+            delayMs: 50,
+          })),
+        })
+        try {
+          const llm = yield* TestLLMServer
+          const dir = yield* tmpdirScoped({
+            git: true,
+            config: openRouterProviderConfig(llm.url),
+          })
+          const session = yield* createSession({ title: "batch queue drop" }).pipe(provideInstanceEffect(dir))
+          const headers = { "x-kilo-directory": dir, "content-type": "application/json" }
+          const prompt = (messageID: MessageID) =>
+            request(pathFor(SessionPaths.promptAsync, { sessionID: session.id }), {
+              method: "POST",
+              headers,
+              body: JSON.stringify({
+                messageID,
+                agent: "chat",
+                model: { providerID: "openrouter", modelID: "anthropic/claude-haiku-5.5-batch" },
+                parts: [{ type: "text", text: "active batch" }],
+              }),
+            })
+          const remove = (messageID: MessageID) =>
+            requestJson<boolean>(
+              `${pathFor(SessionPaths.deleteMessage, { sessionID: session.id, messageID })}?queued=true`,
+              { method: "DELETE", headers },
+            )
+          const active = MessageID.ascending()
+          expect((yield* prompt(active)).status).toBe(204)
+          yield* pollWithTimeout(
+            Effect.sync(() => (restore.mock.posts.length === 1 ? true : undefined)),
+            "batch POST missing",
+          )
+          const queued = MessageID.ascending()
+          expect((yield* prompt(queued)).status).toBe(204)
+          yield* pollWithTimeout(
+            remove(queued).pipe(Effect.map((success) => (success ? true : undefined))),
+            "queued batch message not removed",
+          )
+          const messages = yield* Session.use
+            .messages({ sessionID: session.id })
+            .pipe(provideInstanceEffect(dir), Effect.orDie)
+          expect(messages.some((message) => message.info.id === queued)).toBe(false)
+        } finally {
+          restore.restore()
+        }
+      }).pipe(
+        Effect.provide(TestLLMServer.layer),
+        Effect.provide(AppNodeBuilder.build(CrossSpawnSpawner.node)),
+      ),
+    45_000,
+  )
+  // kilocode_change end
+
 })

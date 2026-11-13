@@ -39,6 +39,10 @@ import { openaiMessages, openaiTools } from "@/kilocode/auto-routing/messages"
 import { organization, token } from "@/kilocode/provider/catalog"
 import { KiloRoutedModel } from "@/kilocode/session/routed-model"
 import { Identity } from "@kilocode/kilo-telemetry"
+import { assertSendAllowed } from "@/kilocode/session/reasoning-output-guard"
+import { OpenRouterBatchTransport } from "@/kilocode/openrouter/batch-transport"
+import { withToolDispatch } from "@/kilocode/openrouter/batch-tool-dispatch"
+import { chatToolChoice } from "@/kilocode/session/chat-agent"
 // kilocode_change end
 import { EffectBridge } from "@/effect/bridge"
 import { RuntimeFlags } from "@/effect/runtime-flags"
@@ -144,15 +148,12 @@ const live: Layer.Layer<
         mode: input.agent.mode,
       })
 
-      const [language, cfg, item, info] = yield* Effect.all(
-        [
-          provider.getLanguage(input.model),
-          config.get(),
-          provider.getProvider(input.model.providerID),
-          auth.get(input.model.providerID),
-        ],
+      const batchRoute = input.model.openrouterBatch === true && input.model.providerID === "openrouter" // kilocode_change
+      const [cfg, item, info] = yield* Effect.all(
+        [config.get(), provider.getProvider(input.model.providerID), auth.get(input.model.providerID)],
         { concurrency: "unbounded" },
       )
+      const language = batchRoute ? undefined : yield* provider.getLanguage(input.model) // kilocode_change
       const isWorkflow = language instanceof GitLabWorkflowLanguageModel
       const base = yield* LLMRequestPrep.prepare({
         ...input,
@@ -207,6 +208,29 @@ const live: Layer.Layer<
         return yield* Effect.fail(new KiloSessionOverflow.PreflightError())
       }
       const prepared = { ...base, tools, params: { ...base.params, maxOutputTokens } }
+      assertSendAllowed({
+        model: input.model,
+        messages: estimated,
+        tools,
+        configured: prepared.params.maxOutputTokens,
+        options: prepared.params.options,
+        reported: input.reportedContextTokens,
+      })
+      if (batchRoute) {
+        const batch = OpenRouterBatchTransport.stream({
+          sessionID: SessionID.make(input.sessionID),
+          userMessageID: input.user.id,
+          model: input.model,
+          auth: info,
+          prepared,
+          abort: input.abort,
+        })
+        return {
+          type: "batch" as const,
+          stream: withToolDispatch(batch, prepared.tools, { messages: prepared.messages, abort: input.abort }), // kilocode_change
+        }
+      }
+      if (language == null) return yield* Effect.fail(new Error("Language model is required for non-batch routes")) // kilocode_change
       // kilocode_change end
 
       // Wire up toolExecutor for DWS workflow models so that tool calls
@@ -493,8 +517,9 @@ const live: Layer.Layer<
       // kilocode_change end
     })
 
-    const stream: Interface["stream"] = (input) =>
-      Stream.scoped(
+    const stream: Interface["stream"] = (input) => {
+      const toolChoice = chatToolChoice(input.agent) ?? input.toolChoice // kilocode_change
+      return Stream.scoped(
         Stream.unwrap(
           Effect.gen(function* () {
             const ctrl = yield* Effect.acquireRelease(
@@ -514,16 +539,18 @@ const live: Layer.Layer<
               ? {
                   ...input,
                   model: routed.model,
+                  toolChoice,
                   user: routed.variant
                     ? { ...input.user, model: { ...input.user.model, variant: routed.variant } }
                     : input.user,
                 }
-              : input
+              : { ...input, toolChoice }
             // kilocode_change end
 
             const result = yield* run({ ...request, abort: ctrl.signal }) // kilocode_change - ADR 0005 dispatch the routed model
 
             if (result.type === "native") return mark(result.stream) // kilocode_change - ADR 0005 stamp the routed model
+            if (result.type === "batch") return mark(result.stream) // kilocode_change
 
             // Adapter seam: both runtimes expose the same LLMEvent stream. Native
             // already returns one; AI SDK streams are converted here.
@@ -544,6 +571,7 @@ const live: Layer.Layer<
           }),
         ),
       )
+    }
 
     return Service.of({ stream })
   }),

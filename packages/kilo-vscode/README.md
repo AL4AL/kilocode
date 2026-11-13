@@ -11,8 +11,8 @@
 </p>
 
 <p align="center">
-  <strong>Kilo is the all-in-one agentic engineering platform.</strong><br>
-  Build, ship, and iterate faster with the most popular open source coding agent.
+  <strong>Kilo Code Surge (Kilo+)</strong> — AL4AL distribution built on <a href="https://github.com/Kilo-Org/kilocode">Kilo Code</a>.<br>
+  See the <a href="../../README.md">repo README</a> for Surge vs upstream comparison tables.
 </p>
 
 <p align="center">

@@ -73,7 +73,8 @@ export function resolveDerivedSessionStatus(input: {
   if (input.hasPermission) return "permission"
   if (input.hasQuestion) return "question"
   if (input.statusType === "offline") return "retry"
-  if (input.statusType === "busy" || input.statusType === "retry") return input.statusType
+  if (input.statusType === "busy" || input.statusType === "retry" || input.statusType === "waiting_batch")
+    return "busy"
   if (input.scheduledAt !== undefined) return "scheduled"
   if (input.statusType === "idle") return input.statusType
   return "idle"

@@ -63,7 +63,8 @@ const snapshot = Effect.fn("BoardTools.snapshot")(function* (
     // `scheduled` is derived at the status endpoint, never stored, but it
     // describes a session doing nothing now like `idle`.
     if (value.type === "idle" || value.type === "scheduled") continue
-    sessions.set(id, { state: value.type, updated: sessions.get(id)?.updated })
+    const state = value.type === "waiting_batch" ? "running" : value.type
+    sessions.set(id, { state, updated: sessions.get(id)?.updated })
   }
   return { observedAt: Date.now(), sessions } satisfies BoardStore.Snapshot
 })

@@ -79,6 +79,10 @@ export const WorkingIndicator: Component<WorkingIndicatorProps> = (props) => {
     const info = session.statusInfo()
     if (info.type === "retry") return info.message || language.t("session.status.retry")
     if (info.type === "offline") return info.message || language.t("session.status.offline")
+    if (info.type === "waiting_batch") {
+      const id = info.batchId ? info.batchId.slice(0, 12) : ""
+      return language.t("session.status.waitingBatch", { batchId: id, modelId: info.modelId })
+    }
     return session.statusText() ?? language.t("ui.sessionTurn.status.thinking")
   })
 

@@ -185,6 +185,8 @@ export interface SessionStatusMessage {
   attempt?: number
   message?: string
   next?: number
+  batchId?: string
+  modelId?: string
 }
 
 export interface SessionWakeupMessage {

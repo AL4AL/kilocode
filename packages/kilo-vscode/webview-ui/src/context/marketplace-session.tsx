@@ -36,7 +36,9 @@ export const MarketplaceSessionProvider: ParentComponent = (props) => {
           ? { type: "retry", attempt: msg.attempt!, message: msg.message!, next: msg.next! }
           : msg.status === "offline"
             ? { type: "offline", message: msg.message! }
-            : { type: msg.status }
+            : msg.status === "waiting_batch"
+              ? { type: "waiting_batch", batchId: msg.batchId ?? "", modelId: msg.modelId ?? "" }
+              : { type: msg.status }
       setStatuses((current) => ({ ...current, [msg.sessionID]: status }))
       return
     }

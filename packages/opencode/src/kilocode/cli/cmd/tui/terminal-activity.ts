@@ -25,7 +25,11 @@ export namespace KiloTerminalActivity {
     const ids = [...new Set([root, ...KiloTerminalTitle.family(input.data.session, root)])]
     if (ids.some((id) => KiloTerminalTitle.attention(input.data, id))) return "waiting"
     if (ids.some((id) => input.data.session_status[id]?.type === "retry")) return "retry"
-    if (ids.some((id) => input.data.session_status[id]?.type === "busy")) return "busy"
+    if (ids.some((id) => {
+      const type = input.data.session_status[id]?.type
+      return type === "busy" || type === "waiting_batch"
+    }))
+      return "busy"
 
     const outcome = input.outcomes?.[root]
     if (outcome === "error") return "error"

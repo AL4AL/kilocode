@@ -4,6 +4,7 @@ import { hideBin } from "yargs/helpers"
 import { UI } from "./cli/ui"
 import { TuiThreadCommand } from "./cli/cmd/tui" // kilocode_change - yargs requires the default command builder eagerly
 import { InstallationVersion } from "@opencode-ai/core/installation/version"
+import { surgeVersion } from "@/kilocode/surge" // kilocode_change
 import { FormatError } from "./cli/error"
 import { EOL } from "os"
 // kilocode_change - upstream web command intentionally omitted; Kilo does not ship an embedded web UI
@@ -59,7 +60,7 @@ let cli = yargs(args) // kilocode_change
   .wrap(100)
   .help("help", "show help")
   .alias("help", "h")
-  .version("version", "show version number", InstallationVersion)
+  .version("version", "show version number", surgeVersion(InstallationVersion)) // kilocode_change
   .alias("version", "v")
   .option("print-logs", {
     describe: "print logs to stderr",

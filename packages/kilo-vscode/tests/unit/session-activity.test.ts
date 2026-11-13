@@ -15,6 +15,7 @@ describe("activity", () => {
   it("maps backend states", () => {
     expect(activity({})).toBe("idle")
     expect(activity({ status: "busy" })).toBe("busy")
+    expect(activity({ status: "waiting_batch" })).toBe("busy")
     expect(activity({ status: "retry" })).toBe("retry")
     expect(activity({ status: "offline" })).toBe("error")
   })

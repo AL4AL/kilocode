@@ -7,7 +7,8 @@ export function tracksElapsed(
   timing: Timing | undefined,
   goal = false,
 ): timing is Timing {
-  return timing !== undefined && (status !== "idle" || submitting || goal)
+  const working = status === "busy" || status === "retry" || status === "waiting_batch"
+  return timing !== undefined && (working || submitting || goal)
 }
 
 /**
@@ -21,5 +22,6 @@ export function tracksElapsed(
  */
 export function showsWorking(status: SessionStatus, submitting: boolean, blocked: boolean, goal = false): boolean {
   if (blocked) return false
-  return submitting || status !== "idle" || goal
+  const working = status === "busy" || status === "retry" || status === "offline" || status === "waiting_batch"
+  return submitting || working || goal
 }

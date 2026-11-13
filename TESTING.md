@@ -257,3 +257,30 @@ Regenerate the SDK and OpenAPI spec so `/doc` and typed clients stay in sync:
 ```
 
 See `AGENTS.md` for the full rationale.
+
+## 11. OpenRouter batch + Chat agent (manual)
+
+Requires `OPENROUTER_API_KEY` in the environment and an OpenRouter model whose id ends with `-batch` in the picker (BYOK `openrouter` provider).
+
+```bash
+# After bun dev serve is up (Section TL;DR)
+SESSION=$(curl -sS -X POST -H "$AUTH" -H "Content-Type: application/json" \
+  -H "x-kilo-directory: $PWD" -d '{"title":"batch test"}' "$BASE/session")
+SID=$(echo "$SESSION" | jq -r '.id')
+
+# Pick agent chat + batch model in UI, or POST a prompt with model/agent in body per your config.
+
+curl -sS -X POST -H "$AUTH" -H "Content-Type: application/json" -H "x-kilo-directory: $PWD" \
+  -d '{"text":"Say hi in one sentence."}' "$BASE/session/$SID/prompt"
+
+# While polling, queue another message (same APIs as interactive — queue is core-owned):
+curl -sS -X POST -H "$AUTH" -H "Content-Type: application/json" -H "x-kilo-directory: $PWD" \
+  -d '{"text":"Second message while first runs."}' "$BASE/session/$SID/prompt"
+
+# Cancel in-flight + queued:
+curl -sS -X POST -H "$AUTH" -H "x-kilo-directory: $PWD" "$BASE/session/$SID/cancel"
+
+watch -n2 curl -sS -H "$AUTH" -H "x-kilo-directory: $PWD" "$BASE/session/$SID/status"
+```
+
+Closing the editor stops local polling; persisted `batchId` resumes on the next `kilo serve` start via GET backfill.

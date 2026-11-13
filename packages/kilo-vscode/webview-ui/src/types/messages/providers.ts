@@ -18,6 +18,7 @@ export interface ProviderModel {
   options?: { description?: string }
   autoRouting?: { models: string[] }
   recommendedIndex?: number
+  openrouterBatch?: boolean
   isFree?: boolean
   mayTrainOnYourPrompts?: boolean
   hasUserByokAvailable?: boolean

@@ -44,6 +44,14 @@ export const Info = Schema.Union([
     scheduledAt: Schema.String,
   }),
   // kilocode_change end
+  // kilocode_change start - OpenRouter batch poll in progress
+  Schema.Struct({
+    type: Schema.Literal("waiting_batch"),
+    batchId: Schema.String,
+    customId: Schema.String,
+    modelId: Schema.String,
+  }),
+  // kilocode_change end
 ]).annotate({ identifier: "SessionStatus" })
 export type Info = Schema.Schema.Type<typeof Info>
 

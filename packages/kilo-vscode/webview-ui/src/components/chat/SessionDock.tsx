@@ -24,6 +24,7 @@
  */
 import { type Component, type JSX, Show, createEffect, createSignal, onCleanup } from "solid-js"
 import { useSession } from "../../context/session"
+import { useLanguage } from "../../context/language"
 import { WorkingIndicator } from "../shared/WorkingIndicator"
 import { showsWorking } from "../shared/working-indicator-utils"
 import { running } from "../../context/session-timing"
@@ -48,6 +49,7 @@ interface SessionDockProps {
 
 export const SessionDock: Component<SessionDockProps> = (props) => {
   const session = useSession()
+  const language = useLanguage()
   const stack = useAgentStack()
   const todo = useTodoDock()
   const board = useSwarmBoard({
@@ -311,6 +313,9 @@ export const SessionDock: Component<SessionDockProps> = (props) => {
             </div>
           </Show>
           <WorkingIndicator onScrollToBottom={props.onScrollToBottom} />
+          <Show when={session.statusInfo().type === "waiting_batch"}>
+            <p class="session-batch-resume-hint">{language.t("session.status.waitingBatchResume")}</p>
+          </Show>
           <div class="session-working-trail" ref={setTrail}>
             {chip(true)}
             {goal.status()}

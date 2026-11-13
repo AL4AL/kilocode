@@ -7,7 +7,10 @@ import type { KiloClient, SessionStatus } from "@kilocode/sdk/v2/client"
  * webview grows a `scheduled` rendering. The SDK type is regenerated from the
  * server schema, so the extra variant is widened locally.
  */
-export type ClientSessionStatus = SessionStatus | { type: "scheduled"; scheduledAt: string }
+export type ClientSessionStatus =
+  | SessionStatus
+  | { type: "scheduled"; scheduledAt: string }
+  | { type: "waiting_batch"; batchId: string; customId: string; modelId: string }
 
 export function clientSessionStatus(status: ClientSessionStatus): SessionStatus {
   return status.type === "scheduled" ? { type: "idle" } : status
@@ -15,9 +18,9 @@ export function clientSessionStatus(status: ClientSessionStatus): SessionStatus 
 
 /** A session asleep on a pending wakeup is not a running turn. */
 export function isRunningStatus(
-  status: SessionStatus["type"] | "scheduled" | undefined,
-): status is "busy" | "retry" | "offline" {
-  return status === "busy" || status === "retry" || status === "offline"
+  status: SessionStatus["type"] | "scheduled" | "waiting_batch" | undefined,
+): status is "busy" | "retry" | "offline" | "waiting_batch" {
+  return status === "busy" || status === "retry" || status === "offline" || status === "waiting_batch"
 }
 
 /**
@@ -42,12 +45,17 @@ export async function seedSessionStatuses(
     for (const [sid, raw] of Object.entries(active) as [string, ClientSessionStatus][]) {
       const info = clientSessionStatus(raw)
       if (accept && !accept(sid, info)) continue
-      map.set(sid, info.type)
+      const running = info.type === "waiting_batch" ? "waiting_batch" : info.type
+      map.set(sid, running)
       post({
         type: "sessionStatus",
         sessionID: sid,
-        status: info.type,
+        status: running,
         ...(info.type === "retry" ? { attempt: info.attempt, message: info.message, next: info.next } : {}),
+        ...(info.type === "offline" ? { message: info.message } : {}),
+        ...(raw.type === "waiting_batch"
+          ? { batchId: raw.batchId, modelId: raw.modelId }
+          : {}),
       })
     }
 

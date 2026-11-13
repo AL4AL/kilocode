@@ -66,7 +66,7 @@ export function taskChildren(tools: ToolPart[]): string[] {
 }
 
 function working(status: SessionStatusInfo | undefined): boolean {
-  return status?.type === "busy" || status?.type === "retry"
+  return status?.type === "busy" || status?.type === "retry" || status?.type === "waiting_batch"
 }
 
 export function backgroundAgents(tools: ToolPart[], status: Record<string, SessionStatusInfo>): BackgroundAgent[] {

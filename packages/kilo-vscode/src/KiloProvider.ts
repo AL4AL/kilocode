@@ -56,7 +56,12 @@ import { removeMcp } from "./kilo-provider/remove-config-item"
 import { MarketplaceService } from "./services/marketplace"
 import type { RemoteStatusService } from "./services/RemoteStatusService"
 import { resolveProjectDirectory } from "./project-directory"
-import { seedSessionStatuses, seedSessionWakeups, clientSessionStatus } from "./session-status"
+import {
+  seedSessionStatuses,
+  seedSessionWakeups,
+  clientSessionStatus,
+  type ClientSessionStatus,
+} from "./session-status"
 import { normalizeEnhancePromptErrorMessage } from "./enhance-prompt-error"
 import { retry } from "./services/cli-backend/retry"
 import {
@@ -3531,7 +3536,7 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     return true
   }
 
-  private publish(sessionID: string, raw: SessionStatus): void {
+  private publish(sessionID: string, raw: ClientSessionStatus): void {
     // A session asleep on a pending wakeup is not a running turn; the webview
     // would otherwise render `scheduled` as permanently working.
     const status = clientSessionStatus(raw)
@@ -3543,12 +3548,17 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
       this.owners.delete(sessionID)
     }
     this.streams.flush(sessionID)
+    const batch =
+      raw.type === "waiting_batch"
+        ? { batchId: raw.batchId, modelId: raw.modelId }
+        : {}
     this.postMessage({
       type: "sessionStatus",
       sessionID,
-      status: status.type,
+      status: status.type === "waiting_batch" ? "waiting_batch" : status.type,
       ...(status.type === "retry" ? { attempt: status.attempt, message: status.message, next: status.next } : {}),
       ...(status.type === "offline" ? { message: status.message } : {}),
+      ...batch,
     })
   }
 
