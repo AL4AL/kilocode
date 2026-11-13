@@ -64,6 +64,8 @@
   <!-- packages/kilo-vscode/src/agent-manager/git-errors.ts -->
 - <https://github.com>
   <!-- packages/opencode/src/kilocode/security/github.ts -->
+- <https://github.com/AL4AL/kilocode>
+  <!-- packages/opencode/src/kilocode/surge.ts -->
 - <https://github.com/anthropics/claude-code/issues/31375>
   <!-- packages/kilo-vscode/src/utils.ts -->
 - <https://github.com/apps/kiloconnect>
@@ -81,6 +83,7 @@
 - <https://github.com/Kilo-Org/kilocode>
   <!-- packages/kilo-vscode/webview-ui/src/components/settings/AboutKiloCodeTab.tsx -->
   <!-- packages/opencode/src/kilocode/cli/cmd/tui/component/dialog-about.tsx -->
+  <!-- packages/opencode/src/kilocode/surge.ts -->
 - <https://github.com/Kilo-Org/kilocode/issues>
   <!-- packages/opencode/src/kilocode/cli/cmd/tui/component/dialog-about.tsx -->
 - <https://github.com/Kilo-Org/kilocode/issues/6986>
@@ -154,6 +157,12 @@
 - <https://opencode.ai/>
   <!-- packages/opencode/src/cli/cmd/generate.ts -->
   <!-- packages/opencode/src/kilocode/server/httpapi/public.ts -->
+- <https://openrouter.ai>
+  <!-- packages/opencode/src/kilocode/openrouter/catalog.ts -->
+- <https://openrouter.ai/api/v1>
+  <!-- packages/opencode/src/kilocode/openrouter/catalog.ts -->
+- <https://openrouter.ai/api/v1/batches>
+  <!-- packages/opencode/src/kilocode/openrouter/batch.ts -->
 - <https://openrouter.ai/api/v1/chat/completions>
   <!-- packages/opencode/src/kilocode/tool/generate-image.ts -->
 - <https://openrouter.ai/docs/cookbook/administration/usage-accounting>
