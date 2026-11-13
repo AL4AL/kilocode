@@ -1,6 +1,9 @@
 import * as vscode from "vscode"
 import type { KiloClient } from "@kilocode/sdk/v2/client"
+import { EXTENSION_ID } from "../constants"
 import { retry } from "../services/cli-backend/retry"
+
+const skipMarketing = EXTENSION_ID === "al4al.kilo-code-surge"
 
 const KEY = "kilo.dismissedNotificationIds"
 
@@ -34,6 +37,14 @@ export interface NotificationsContext {
 }
 
 export async function fetchAndSendNotifications(ctx: NotificationsContext): Promise<void> {
+  if (skipMarketing) {
+    const dismissedIds = ctx.context?.globalState.get<string[]>(KEY, []) ?? []
+    const message = { type: "notificationsLoaded" as const, notifications: [], dismissedIds }
+    ctx.set(message)
+    ctx.post(message)
+    return
+  }
+
   if (!ctx.client) {
     const cached = ctx.cached()
     if (cached) {

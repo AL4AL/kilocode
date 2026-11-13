@@ -146,6 +146,8 @@ bun run snapshot:build             # VSIX under $TMPDIR/kilo-vscode-snapshots/
 
 Install: **Extensions → Install from VSIX…** — Surge installs **alongside** upstream Kilo Code because the id differs.
 
+Surge does **not** load Kilo-Org cloud marketing notification carousels (`kilo-provider/notifications.ts`); the empty-state multi-step “Try Kilo…” banners are suppressed.
+
 ## Architecture
 
 ### Extension ↔ CLI Backend
