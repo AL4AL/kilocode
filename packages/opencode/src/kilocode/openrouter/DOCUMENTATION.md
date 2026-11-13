@@ -25,3 +25,5 @@ Docs read (2026-11-13):
 OpenRouter **chat** models are loaded live from `GET /api/v1/models` (`output_modalities=text`, `endpoints=/api/v1/chat/completions`) when `OPENROUTER_API_KEY` is set — see [`catalog.ts`](./catalog.ts).
 
 The live catalog must not filter the models API to chat-only endpoints (that drops `provider/model:batch` rows). `fromList` ingests those twins and sets `batch` on the chat base model; synthetic `*-batch` ids are still added in [`batch-models.ts`](./batch-models.ts) when no `:batch` twin exists.
+
+`ModelCache` paginates through OpenRouter `links.next` until the list is exhausted, compares row count to `total_count`, and logs a warning when incomplete. With an API key, the VS Code extension loads this list from `kilo serve` (`GET /provider`); live rows overlay the bundled models.dev baseline so config-only entries are not dropped.

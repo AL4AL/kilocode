@@ -2,6 +2,8 @@
 import type { Provider } from "@opencode-ai/core/models-dev"
 
 const ROOT = "https://openrouter.ai/api/v1"
+export const OPENROUTER_ORIGIN = "https://openrouter.ai"
+const PAGE = 500
 const CHAT = "/api/v1/chat/completions"
 const BATCH = "/api/v1/batches"
 
@@ -28,16 +30,42 @@ export type OpenRouterRow = {
   supported_parameters?: string[]
 }
 
-export type OpenRouterList = { data?: OpenRouterRow[] }
+export type OpenRouterList = {
+  data?: OpenRouterRow[]
+  total_count?: number
+  links?: { next?: string | null }
+}
 
 const BLOCKED_OUTPUT = new Set(["embeddings", "rerank", "decisions", "speech", "transcription"])
 
-export function catalogQuery() {
+export function catalogQuery(offset = 0) {
   const params = new URLSearchParams({
-    limit: "1000",
+    limit: String(PAGE),
     output_modalities: "text",
+    offset: String(offset),
   })
   return `${ROOT}/models?${params}`
+}
+
+export function nextCatalogUrl(next: string) {
+  if (next.startsWith("http")) return next
+  return `${OPENROUTER_ORIGIN}${next.startsWith("/") ? next : `/${next}`}`
+}
+
+export function dedupeRows(rows: OpenRouterRow[]) {
+  const map = new Map<string, OpenRouterRow>()
+  for (const row of rows) {
+    if (row.id) map.set(row.id, row)
+  }
+  return [...map.values()]
+}
+
+/** Live catalog wins on id clashes; keeps models.dev / config-only rows not returned by OpenRouter. */
+export function overlayOpenRouterModels(
+  base: Provider["models"],
+  live: Provider["models"],
+): Provider["models"] {
+  return { ...base, ...live }
 }
 
 export function keepsChatText(row: OpenRouterRow) {

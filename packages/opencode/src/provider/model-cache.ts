@@ -12,7 +12,13 @@ import * as Log from "@opencode-ai/core/util/log"
 import { LayerNode } from "@opencode-ai/core/effect/layer-node"
 import { AppNodeBuilder } from "@opencode-ai/core/effect/app-node-builder" // kilocode_change
 import { httpClient } from "@opencode-ai/core/effect/app-node-platform" // kilocode_change
-import { catalogQuery, fromList, type OpenRouterList } from "@/kilocode/openrouter/catalog" // kilocode_change
+import {
+  catalogQuery,
+  dedupeRows,
+  fromList,
+  nextCatalogUrl,
+  type OpenRouterList,
+} from "@/kilocode/openrouter/catalog" // kilocode_change
 
 type Models = Provider["models"]
 type KiloOptions = NonNullable<Parameters<typeof fetchKiloModels>[0]>
@@ -107,20 +113,44 @@ export const layer: Layer.Layer<
         return {}
       }
 
-      const response = yield* HttpClientRequest.get(catalogQuery()).pipe(
-        HttpClientRequest.acceptJson,
-        HttpClientRequest.bearerToken(options.apiKey),
-        http.execute,
-        Effect.timeout("30 seconds"),
-      )
-      if (response.status < 200 || response.status >= 300) {
-        log.error("openrouter model fetch failed", { status: response.status })
-        return {}
+      let url: string | undefined = catalogQuery(0)
+      const acc: OpenRouterList["data"] = []
+      let total: number | undefined
+      let pages = 0
+      const maxPages = 25
+
+      while (url && pages < maxPages) {
+        pages++
+        const response = yield* HttpClientRequest.get(url).pipe(
+          HttpClientRequest.acceptJson,
+          HttpClientRequest.bearerToken(options.apiKey),
+          http.execute,
+          Effect.timeout("45 seconds"),
+        )
+        if (response.status < 200 || response.status >= 300) {
+          log.error("openrouter model fetch failed", { status: response.status, page: pages })
+          if (acc.length === 0) return {}
+          break
+        }
+
+        const json = (yield* HttpClientResponse.schemaBodyJson(Schema.Unknown)(response)) as OpenRouterList
+        acc.push(...(json.data ?? []))
+        total ??= json.total_count
+        const next = json.links?.next
+        url = next ? nextCatalogUrl(next) : undefined
       }
 
-      const json = (yield* HttpClientResponse.schemaBodyJson(Schema.Unknown)(response)) as OpenRouterList
-      const models = fromList(json)
-      log.info("openrouter models loaded", { count: Object.keys(models).length })
+      const rows = dedupeRows(acc)
+      if (total != null && rows.length < total) {
+        log.warn("openrouter catalog incomplete", { rows: rows.length, total, pages })
+      }
+      const models = fromList({ data: rows })
+      log.info("openrouter models loaded", {
+        picker: Object.keys(models).length,
+        rows: rows.length,
+        total,
+        pages,
+      })
       return models
     })
 

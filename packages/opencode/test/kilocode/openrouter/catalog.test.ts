@@ -2,15 +2,36 @@ import { describe, expect, it } from "bun:test"
 import {
   batchCapable,
   catalogQuery,
+  dedupeRows,
   fromList,
   keepsBatchTwin,
   keepsChatText,
+  overlayOpenRouterModels,
 } from "../../../src/kilocode/openrouter/catalog"
 
 describe("openrouter catalog", () => {
   it("builds filtered list URL", () => {
     expect(catalogQuery()).toContain("output_modalities=text")
     expect(catalogQuery()).not.toContain("endpoints=")
+    expect(catalogQuery(500)).toContain("offset=500")
+  })
+
+  it("overlays live models on the static baseline", () => {
+    const merged = overlayOpenRouterModels(
+      { "a/old": { id: "a/old", name: "Old" } as never },
+      { "a/new": { id: "a/new", name: "New" } as never },
+    )
+    expect(merged["a/old"]?.name).toBe("Old")
+    expect(merged["a/new"]?.name).toBe("New")
+  })
+
+  it("dedupes rows by id", () => {
+    const rows = dedupeRows([
+      { id: "x", name: "one" },
+      { id: "x", name: "two" },
+    ])
+    expect(rows).toHaveLength(1)
+    expect(rows[0]?.name).toBe("two")
   })
 
   it("drops embedding and decision models", () => {

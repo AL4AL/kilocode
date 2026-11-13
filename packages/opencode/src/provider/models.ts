@@ -7,6 +7,7 @@ import { Context, Effect, Layer } from "effect"
 import { AI_SDK_PROVIDERS, KILO_OPENROUTER_BASE, PROMPTS } from "@kilocode/kilo-gateway"
 import { overlay } from "@/kilocode/anaconda-desktop/provider"
 import { compatible, organization, token } from "@/kilocode/provider/catalog"
+import { overlayOpenRouterModels } from "@/kilocode/openrouter/catalog" // kilocode_change
 import { LayerNode } from "@opencode-ai/core/effect/layer-node"
 import { AppNodeBuilder } from "@opencode-ai/core/effect/app-node-builder" // kilocode_change
 
@@ -81,10 +82,14 @@ export const layer: Layer.Layer<Service, never, Core.Service | Config.Service | 
             (info?.type === "api" ? info.key : undefined) ??
             process.env.OPENROUTER_API_KEY
           if (!key) return
+          const base = providers.openrouter.models
           const live = yield* cache.fetch("openrouter", { apiKey: key }).pipe(Effect.catch(() => Effect.succeed({})))
-          if (Object.keys(live).length > 0)
-            providers.openrouter = { ...providers.openrouter, models: live }
-          else yield* cache.refresh("openrouter", { apiKey: key }).pipe(Effect.ignore, Effect.forkDetach)
+          if (Object.keys(live).length > 0) {
+            providers.openrouter = {
+              ...providers.openrouter,
+              models: overlayOpenRouterModels(base, live),
+            }
+          } else yield* cache.refresh("openrouter", { apiKey: key }).pipe(Effect.ignore, Effect.forkDetach)
         })
 
         if (!allowed) {
