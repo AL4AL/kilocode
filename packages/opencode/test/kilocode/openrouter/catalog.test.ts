@@ -1,10 +1,16 @@
 import { describe, expect, it } from "bun:test"
-import { batchCapable, catalogQuery, fromList, keepsChatText } from "../../../src/kilocode/openrouter/catalog"
+import {
+  batchCapable,
+  catalogQuery,
+  fromList,
+  keepsBatchTwin,
+  keepsChatText,
+} from "../../../src/kilocode/openrouter/catalog"
 
 describe("openrouter catalog", () => {
   it("builds filtered list URL", () => {
     expect(catalogQuery()).toContain("output_modalities=text")
-    expect(catalogQuery()).toContain(encodeURIComponent("/api/v1/chat/completions"))
+    expect(catalogQuery()).not.toContain("endpoints=")
   })
 
   it("drops embedding and decision models", () => {
@@ -37,5 +43,24 @@ describe("openrouter catalog", () => {
     expect(batchCapable(row)).toBe(true)
     const models = fromList({ data: [row] })
     expect((models[row.id] as { batch?: boolean })?.batch).toBe(true)
+  })
+
+  it("includes :batch twins and marks chat base models batch-capable", () => {
+    const base = {
+      id: "deepseek/deepseek-v4.1-flash-1017",
+      name: "Flash base",
+      endpoints: ["/api/v1/chat/completions"],
+      architecture: { output_modalities: ["text"], input_modalities: ["text"] },
+    }
+    const twin = {
+      id: "deepseek/deepseek-v4.1-flash-1017:batch",
+      name: "Flash batch",
+      endpoints: ["/api/v1/batches"],
+      architecture: { output_modalities: ["text"], input_modalities: ["text"] },
+    }
+    expect(keepsBatchTwin(twin)).toBe(true)
+    const models = fromList({ data: [base, twin] })
+    expect((models[twin.id] as { openrouterBatch?: boolean })?.openrouterBatch).toBe(true)
+    expect((models[base.id] as { batch?: boolean })?.batch).toBe(true)
   })
 })

@@ -36,7 +36,6 @@ export function catalogQuery() {
   const params = new URLSearchParams({
     limit: "1000",
     output_modalities: "text",
-    endpoints: CHAT,
   })
   return `${ROOT}/models?${params}`
 }
@@ -63,6 +62,34 @@ export function keepsChatText(row: OpenRouterRow) {
   return true
 }
 
+function keepsTextOutput(row: OpenRouterRow) {
+  const out = row.architecture?.output_modalities ?? []
+  if (out.some((m) => BLOCKED_OUTPUT.has(m))) return false
+  if (out.length > 0 && !out.includes("text")) return false
+  const modality = row.architecture?.modality ?? ""
+  if (modality && !modality.includes("text")) return false
+  return true
+}
+
+/** OpenRouter lists batch-only variants as `provider/model:batch` with only `/api/v1/batches`. */
+export function keepsBatchTwin(row: OpenRouterRow) {
+  if (!row.id?.endsWith(":batch")) return false
+  if (!keepsTextOutput(row)) return false
+  const id = row.id.toLowerCase()
+  if (id.includes("embed") || id.includes("embedding") || id.includes("rerank") || id.includes("decision"))
+    return false
+  return (row.endpoints ?? []).includes(BATCH)
+}
+
+function batchTwinBases(rows: OpenRouterRow[]) {
+  const bases = new Set<string>()
+  for (const row of rows) {
+    if (!keepsBatchTwin(row)) continue
+    bases.add(row.id.slice(0, -":batch".length))
+  }
+  return bases
+}
+
 function costPerM(value: string | undefined) {
   const n = value == null ? 0 : Number(value)
   if (!Number.isFinite(n)) return 0
@@ -86,15 +113,16 @@ function modalities(row: OpenRouterRow) {
   return { input: ins, output: outs }
 }
 
-export function batchCapable(row: OpenRouterRow) {
+export function batchCapable(row: OpenRouterRow, twins?: Set<string>) {
   if (row.id.endsWith(":batch")) return true
+  if (twins?.has(row.id)) return true
   return (row.endpoints ?? []).includes(BATCH)
 }
 
-export function toCatalogModel(row: OpenRouterRow): Provider["models"][string] {
+export function toCatalogModel(row: OpenRouterRow, twins?: Set<string>): Provider["models"][string] {
   const mods = modalities(row)
   const params = row.supported_parameters ?? []
-  const batch = batchCapable(row)
+  const batch = batchCapable(row, twins)
   const name = batch && row.id.endsWith(":batch") ? row.name : batch ? `${row.name}` : row.name
   return {
     id: row.id,
@@ -120,10 +148,15 @@ export function toCatalogModel(row: OpenRouterRow): Provider["models"][string] {
 }
 
 export function fromList(json: OpenRouterList): Provider["models"] {
+  const rows = json.data ?? []
+  const twins = batchTwinBases(rows)
   const models = {} as Record<string, Provider["models"][string]>
-  for (const row of json.data ?? []) {
-    if (!keepsChatText(row)) continue
-    models[row.id] = toCatalogModel(row)
+  for (const row of rows) {
+    if (keepsChatText(row)) models[row.id] = toCatalogModel(row, twins)
+  }
+  for (const row of rows) {
+    if (!keepsBatchTwin(row) || models[row.id]) continue
+    models[row.id] = toCatalogModel(row, twins)
   }
   return models
 }
