@@ -16,10 +16,11 @@ OpenRouter batch-capable models appear in the model picker with a **Batch** badg
 
 - One user message → one batch request per LLM step (tool loops use a new batch after tools run).
 - While a batch polls, additional prompts **queue** on the session (`session.queue.changed`).
-- **Stop** cancels the OpenRouter batch (`DELETE`) and clears pending store rows.
+- **Stop** sends `DELETE`, keeps the **Stop** button until OpenRouter reports the batch **cancelled** (or gone with `404`), then returns to idle.
 - The CLI polls OpenRouter every **5 seconds** (override with `KILO_OPENROUTER_BATCH_POLL_MS`) while `kilo serve` is running. There is no client-side timeout—the session stays in **waiting batch** until OpenRouter reaches a final status or you stop.
 - A brief **404** right after submit is normal; Kilo keeps polling instead of failing the turn.
 - User-visible failure happens only when the batch status is **`failed`**, **`expired`**, or **`cancelled`** (using OpenRouter’s `error.message`), not while the job is still validating or in progress.
 - If the editor or backend restarts, pending rows resume from disk; the background sweep restarts polling every 5s while the extension is enabled.
+- After a batch backfill completes, Kilo runs **title generation** when the session still has the default `New session - …` title and the assistant reply is complete (small title model, same as normal chat).
 
 Batch requires BYOK **OpenRouter** (API key in provider settings / `auth.json`). Expect higher latency than streaming; pricing follows [OpenRouter batch docs](https://openrouter.ai/docs/batch-quickstart).

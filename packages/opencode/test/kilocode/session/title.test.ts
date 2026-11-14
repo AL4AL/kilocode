@@ -40,6 +40,13 @@ function assistant(parts: MessageV2.Part[]): MessageV2.WithParts {
   return { info: { id: `msg_a${seq++}`, sessionID, role: "assistant" }, parts } as unknown as MessageV2.WithParts
 }
 
+function assistantDone(parts: MessageV2.Part[]): MessageV2.WithParts {
+  return {
+    info: { id: `msg_a${seq++}`, sessionID, role: "assistant", time: { created: 0, completed: 1 } },
+    parts,
+  } as unknown as MessageV2.WithParts
+}
+
 function content(messages: ModelMessage[]) {
   const first = messages[0] as { content?: unknown } | undefined
   return typeof first?.content === "string" ? first.content : JSON.stringify(first?.content)
@@ -78,6 +85,18 @@ describe("KiloSessionTitle.shouldGenerate", () => {
     const history = [user([text("x".repeat(200))])]
     for (let i = 0; i < 4; i++) expect(KiloSessionTitle.shouldGenerate({ sessionID, history })).toBe(true)
     expect(KiloSessionTitle.shouldGenerate({ sessionID, history })).toBe(false)
+  })
+})
+
+describe("KiloSessionTitle.shouldGenerateAfterReply", () => {
+  test("names after a short first message once the assistant reply completed", () => {
+    const history = [user([text("hi")]), assistantDone([text("hello")])]
+    expect(KiloSessionTitle.shouldGenerateAfterReply({ sessionID, history })).toBe(true)
+  })
+
+  test("waits without a completed assistant reply", () => {
+    const history = [user([text("hi")]), assistant([text("hello")])]
+    expect(KiloSessionTitle.shouldGenerateAfterReply({ sessionID, history })).toBe(false)
   })
 })
 

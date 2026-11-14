@@ -12,6 +12,7 @@ export function createBatchFetch(timeline: Timeline) {
   const deletes: string[] = []
   const polls = new Map<string, number>()
   const order = new Map<string, number>()
+  const cancelled = new Set<string>()
   let id = 0
   let created = 0
 
@@ -29,10 +30,14 @@ export function createBatchFetch(timeline: Timeline) {
     const match = url.match(/\/v1\/batches\/([^/]+)$/)
     if (match && init?.method === "DELETE") {
       deletes.push(match[1]!)
+      cancelled.add(match[1]!)
       return new Response(JSON.stringify({ id: match[1], status: "cancelled" }), { status: 200 })
     }
     if (match?.[1]) {
       const batchId = match[1]!
+      if (cancelled.has(batchId)) {
+        return new Response(JSON.stringify({ id: batchId, status: "cancelled", results: null }), { status: 200 })
+      }
       const step = polls.get(batchId) ?? 0
       polls.set(batchId, step + 1)
       const batch = order.get(batchId) ?? 0

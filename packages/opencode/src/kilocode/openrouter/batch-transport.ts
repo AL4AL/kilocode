@@ -144,11 +144,7 @@ async function* runPoll(input: BatchStreamInput, tokenValue: string) {
     const events = fromResult(item)
     for (const event of events) yield event
   } catch (err) {
-    OpenRouterBatchActive.clear(input.sessionID)
-    if (merged.signal.aborted) {
-      if (batchId) OpenRouterBatchStore.clear(customId)
-      clearWaitingBatch(input.sessionID)
-    }
+    if (!merged.signal.aborted) OpenRouterBatchActive.clear(input.sessionID)
     throw err
   } finally {
     ctrl.abort()

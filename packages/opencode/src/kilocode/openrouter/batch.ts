@@ -151,6 +151,30 @@ export async function cancel(input: { token: string; id: string; fetch?: FetchLi
   }
 }
 
+/** After DELETE, poll until OpenRouter reports `cancelled` or the batch is gone (404). */
+export async function waitUntilGone(input: { token: string; id: string; signal?: AbortSignal; fetch?: FetchLike }) {
+  const interval = pollMs()
+  while (true) {
+    if (input.signal?.aborted) throw input.signal.reason ?? new DOMException("Aborted", "AbortError")
+    const row = await read({ token: input.token, id: input.id, fetch: input.fetch })
+    if (row.status === 404) return
+    if (fatalHttp(row.status)) throw new Error(row.message)
+    if (row.status === 429 || row.status >= 500) {
+      const delay = row.status === 429 ? Math.max(interval, 60_000) : interval
+      await sleep(delay, input.signal)
+      continue
+    }
+    if (!row.info) {
+      if (row.status >= 400) throw new Error(row.message)
+      await sleep(interval, input.signal)
+      continue
+    }
+    if (row.info.status === "cancelled") return
+    if (TERMINAL.has(row.info.status)) return
+    await sleep(interval, input.signal)
+  }
+}
+
 export async function poll(input: {
   token: string
   id: string

@@ -3551,7 +3551,11 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     this.streams.flush(sessionID)
     const batch =
       raw.type === "waiting_batch"
-        ? { batchId: raw.batchId, modelId: raw.modelId }
+        ? {
+            batchId: raw.batchId,
+            modelId: raw.modelId,
+            ...( "phase" in raw && raw.phase ? { phase: raw.phase } : {}),
+          }
         : {}
     this.postMessage({
       type: "sessionStatus",

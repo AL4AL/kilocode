@@ -9,6 +9,9 @@ import { resolveOpenRouterKey } from "./batch-transport"
 import { OpenRouterBatchStore, type PendingBatch } from "./batch-store"
 import { setWaitingBatch, clearWaitingBatch } from "./batch-status"
 import { OpenRouterBatchBackfill } from "./batch-backfill"
+import { OpenRouterBatchActive } from "./batch-active"
+import { SessionPrompt } from "@/session/prompt"
+import type { SessionID } from "@/session/schema"
 
 const log = Log.create({ service: "openrouter.batch-resume" })
 
@@ -49,6 +52,7 @@ async function modelFor(row: PendingBatch) {
 }
 
 async function finishCompleted(row: PendingBatch, info: BatchInfo, opts?: { fetch?: typeof fetch }) {
+  if (OpenRouterBatchActive.get(row.sessionID)) return
   const item = info.results?.find((r) => r.custom_id === row.customId) ?? info.results?.[0]
   if (!item) {
     log.warn("batch resume missing result item", { batchId: row.batchId, customId: row.customId })
@@ -69,6 +73,10 @@ async function finishCompleted(row: PendingBatch, info: BatchInfo, opts?: { fetc
     OpenRouterBatchStore.clear(row.customId)
     clearWaitingBatch(row.sessionID)
     log.info("batch resume backfilled assistant", { batchId: row.batchId, sessionID: row.sessionID })
+    const sid = row.sessionID as SessionID
+    await app.runPromise(SessionPrompt.Service.pipe(Effect.flatMap((svc) => svc.titleIfDefault(sid)))).catch((err) => {
+      log.warn("batch resume title after backfill failed", { sessionID: sid, err })
+    })
     return
   }
   OpenRouterBatchStore.clear(row.customId)
@@ -95,6 +103,7 @@ async function pollPending(row: PendingBatch, token: string, opts?: { fetch?: ty
 }
 
 function startPoll(row: PendingBatch, token: string, opts?: { fetch?: typeof fetch }) {
+  if (OpenRouterBatchActive.get(row.sessionID)) return
   if (polling.has(row.batchId)) return
   polling.add(row.batchId)
   void pollPending(row, token, opts).finally(() => polling.delete(row.batchId))

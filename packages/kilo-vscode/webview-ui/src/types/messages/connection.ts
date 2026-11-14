@@ -10,7 +10,7 @@ export type SessionStatusInfo =
   | { type: "busy" }
   | { type: "retry"; attempt: number; message: string; next: number }
   | { type: "offline"; message: string }
-  | { type: "waiting_batch"; batchId: string; modelId: string }
+  | { type: "waiting_batch"; batchId: string; modelId: string; phase?: "polling" | "cancelling" } // phase omitted => polling
 
 // Server info
 export interface ServerInfo {

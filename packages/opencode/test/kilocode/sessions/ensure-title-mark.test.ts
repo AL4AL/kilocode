@@ -428,7 +428,7 @@ it.instance(
 )
 
 it.instance(
-  "ensureTitle defers a short first turn and names on the second",
+  "ensureTitle names a short first turn after the assistant reply",
   () =>
     Effect.gen(function* () {
       resetHooks()
@@ -444,13 +444,16 @@ it.instance(
       const first = yield* prompt
         .prompt({ sessionID: chat.id, agent: "build", model: ref, parts: [{ type: "text", text: "hi" }] })
         .pipe(Effect.forkChild)
-      yield* Fiber.join(first)
-      yield* Effect.sleep(200)
 
-      // No tool work, one short message: the title is not generated yet.
-      const deferred = yield* sessions.get(chat.id)
-      expect(Session.isDefaultTitle(deferred.title)).toBe(true)
-      expect(hooks.setTitleCalls).toHaveLength(0)
+      yield* pollWithTimeout(
+        Effect.gen(function* () {
+          const s = yield* sessions.get(chat.id).pipe(Effect.orElseSucceed(() => null))
+          return s?.title === "E2E Title" ? true : undefined
+        }),
+        `ensureTitle never named the first turn; calls=${JSON.stringify(hooks.setTitleCalls)}`,
+        "20 seconds",
+      )
+      yield* Fiber.join(first)
 
       yield* llm.text("assistant reply")
       const second = yield* prompt

@@ -15,7 +15,7 @@ import { ModelV2 } from "@opencode-ai/core/model"
 import type { Provider } from "@/provider/provider"
 import { Session } from "@/session/session"
 import { MessageV2 } from "@/session/message-v2"
-import { MessageID } from "@/session/schema"
+import { MessageID, PartID } from "@/session/schema"
 import { SessionStatus } from "@/session/status"
 import { SessionSummary } from "@/session/summary"
 import { Snapshot } from "@/snapshot"
@@ -115,6 +115,69 @@ describe("batch backfill", () => {
         const info = row?.info
         expect(info?.role === "assistant" && info.time.completed).toBeDefined()
         expect(OpenRouterBatchStore.byCustom(`kilo-${user.id}`)).toBeUndefined()
+      }),
+    ),
+  )
+
+  it.effect("skips when assistant already has live batch parts", () =>
+    provideTmpdirProject((dir) =>
+      Effect.gen(function* () {
+        const sessions = yield* Session.Service
+        const chat = yield* sessions.create({ title: "batch dup" })
+        const user = yield* sessions.updateMessage({
+          id: MessageID.make("msg_user_dup"),
+          role: "user",
+          sessionID: chat.id,
+          agent: "chat",
+          model: { providerID: model.providerID, modelID: model.id },
+          time: { created: Date.now() },
+        })
+        const assistant = yield* sessions.updateMessage({
+          id: MessageID.ascending(),
+          role: "assistant",
+          parentID: user.id,
+          sessionID: chat.id,
+          agent: "chat",
+          mode: "chat",
+          path: { cwd: dir, root: dir },
+          cost: 0,
+          tokens: { input: 0, output: 0, reasoning: 0, cache: { read: 0, write: 0 } },
+          modelID: model.id,
+          providerID: model.providerID,
+          time: { created: Date.now() },
+        })
+        yield* sessions.updatePart({
+          id: PartID.ascending(),
+          messageID: assistant.id,
+          sessionID: chat.id,
+          type: "text",
+          text: "Why don't programmers like nature?\nToo many bugs.",
+          time: { start: Date.now() },
+        })
+        const events = fromResult({
+          custom_id: `kilo-${user.id}`,
+          response: {
+            status_code: 200,
+            body: {
+              choices: [
+                {
+                  finish_reason: "stop",
+                  message: { content: "Why don't programmers like nature?\nToo many bugs.", reasoning: "meta" },
+                },
+              ],
+            },
+          },
+        })
+        const ok = yield* OpenRouterBatchBackfill.apply({
+          sessionID: chat.id,
+          userMessageID: user.id,
+          model,
+          events,
+        })
+        expect(ok).toBe(false)
+        const msgs = yield* sessions.messages({ sessionID: chat.id })
+        const row = msgs.find((m) => m.info.id === assistant.id)
+        expect(row?.parts.filter((p) => p.type === "text").length).toBe(1)
       }),
     ),
   )

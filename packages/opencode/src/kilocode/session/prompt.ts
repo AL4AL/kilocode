@@ -183,9 +183,7 @@ export namespace KiloSessionPrompt {
           yield* KiloSessionPromptQueue.cancel(sessionID)
           PlanFollowup.abort(sessionID)
           yield* abortIntakes(sessionID)
-          yield* Effect.sync(() => {
-            void OpenRouterBatchActive.cancelTurn(sessionID)
-          }) // kilocode_change
+          yield* Effect.promise(() => OpenRouterBatchActive.cancelTurn(sessionID)) // kilocode_change
           yield* input.cancel(sessionID, { background: input.scope !== "session" })
         })
 

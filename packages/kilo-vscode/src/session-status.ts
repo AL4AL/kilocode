@@ -10,7 +10,7 @@ import type { KiloClient, SessionStatus } from "@kilocode/sdk/v2/client"
 export type ClientSessionStatus =
   | SessionStatus
   | { type: "scheduled"; scheduledAt: string }
-  | { type: "waiting_batch"; batchId: string; customId: string; modelId: string }
+  | { type: "waiting_batch"; batchId: string; customId: string; modelId: string; phase?: "polling" | "cancelling" }
 
 export function clientSessionStatus(status: ClientSessionStatus): SessionStatus {
   return status.type === "scheduled" ? { type: "idle" } : status
@@ -54,7 +54,11 @@ export async function seedSessionStatuses(
         ...(info.type === "retry" ? { attempt: info.attempt, message: info.message, next: info.next } : {}),
         ...(info.type === "offline" ? { message: info.message } : {}),
         ...(raw.type === "waiting_batch"
-          ? { batchId: raw.batchId, modelId: raw.modelId }
+          ? {
+              batchId: raw.batchId,
+              modelId: raw.modelId,
+              ...("phase" in raw && raw.phase ? { phase: raw.phase } : {}),
+            }
           : {}),
       })
     }

@@ -155,6 +155,7 @@ export interface Interface {
   readonly shell: (input: ShellInput) => Effect.Effect<SessionV1.WithParts, Session.BusyError>
   readonly command: (input: CommandInput) => Effect.Effect<SessionV1.WithParts, Image.Error | Error>
   readonly resolvePromptParts: (template: string) => Effect.Effect<PromptInput["parts"]>
+  readonly titleIfDefault: (sessionID: SessionID) => Effect.Effect<void> // kilocode_change
 }
 
 export class Service extends Context.Service<Service, Interface>()("@opencode/SessionPrompt") {}
@@ -2500,6 +2501,10 @@ export const layer = Layer.effect(
       return result
     })
 
+    const titleIfDefault = Effect.fn("SessionPrompt.titleIfDefault")(function* (sessionID: SessionID) {
+      yield* KiloSessionTitle.deferredAfterReply({ sessionID, scope, sessions, database, generate: title })
+    })
+
     return Service.of({
       cancel,
       paused: (id) => control.paused(id), // kilocode_change - wakeup resume reads it before forking a turn
@@ -2508,6 +2513,7 @@ export const layer = Layer.effect(
       shell,
       command,
       resolvePromptParts,
+      titleIfDefault, // kilocode_change
     })
   }),
 )

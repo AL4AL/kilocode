@@ -731,6 +731,7 @@ export const dict = {
   "session.status.working": "Working...",
   "session.status.offline": "Network disconnected — reconnecting...",
   "session.status.waitingBatch": "Waiting on OpenRouter batch ({{batchId}}) · {{modelId}}",
+  "session.status.cancellingBatch": "Cancelling OpenRouter batch ({{batchId}}) · {{modelId}}",
   "session.status.waitingBatchResume":
     "This session has a batch still processing on OpenRouter. Results will appear when the batch completes.",
   "composer.reasoningBudgetWarning":

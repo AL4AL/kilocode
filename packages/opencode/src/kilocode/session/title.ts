@@ -115,6 +115,33 @@ export namespace KiloSessionTitle {
     return true
   }
 
+  /** Default title + a completed assistant reply on the latest user turn (batch backfill / missed turn-end). */
+  export function shouldGenerateAfterReply(input: { sessionID: string; history: MessageV2.WithParts[] }) {
+    const used = attempts.get(input.sessionID) ?? 0
+    if (used >= MAX_ATTEMPTS) return false
+
+    const users = input.history.filter(real)
+    const lastUser = users.at(-1)
+    if (!lastUser) return false
+
+    const index = input.history.findIndex((msg) => msg.info.id === lastUser.info.id)
+    const replied = input.history.slice(index + 1).some(
+      (msg) =>
+        msg.info.role === "assistant" &&
+        msg.info.time?.completed != null &&
+        msg.parts.some(
+          (part) =>
+            (part.type === "text" && part.text.trim().length > 0) ||
+            (part.type === "reasoning" && part.text.trim().length > 0),
+        ),
+    )
+    if (!replied) return false
+
+    attempts.set(input.sessionID, used + 1)
+    prune()
+    return true
+  }
+
   /**
    * Build the model request for the title agent. Returns null when the history
    * has no real user turn. The context holds the recent user messages plus a
@@ -181,7 +208,44 @@ export namespace KiloSessionTitle {
         ),
       )
       const finalUser = KiloSessionMessageOrder.latest(history).user
-      if (!finalUser || !shouldGenerate({ sessionID: input.sessionID, history })) return
+      const gate =
+        shouldGenerate({ sessionID: input.sessionID, history }) ||
+        shouldGenerateAfterReply({ sessionID: input.sessionID, history })
+      if (!finalUser || !gate) return
+
+      yield* input
+        .generate({
+          session: titled,
+          history,
+          providerID: finalUser.model.providerID,
+          modelID: finalUser.model.modelID,
+        })
+        .pipe(Effect.ignore, Effect.forkIn(input.scope))
+    })
+  }
+
+  /** When turn-end title was skipped (e.g. batch backfill after VS Code restart). */
+  export function deferredAfterReply(input: {
+    sessionID: SessionID
+    scope: Scope.Scope
+    sessions: Session.Interface
+    database: Database.Interface
+    generate: Generate
+  }) {
+    return Effect.gen(function* () {
+      const titled = yield* input.sessions.get(input.sessionID).pipe(Effect.orDie)
+      if (titled.parentID || !Session.isDefaultTitle(titled.title)) return
+
+      const history = KiloSessionPrompt.trimBeforeLastSummary(
+        KiloSessionPromptQueue.scope(
+          input.sessionID,
+          yield* MessageV2.filterCompactedEffect(input.sessionID).pipe(
+            Effect.provideService(Database.Service, input.database),
+          ),
+        ),
+      )
+      const finalUser = KiloSessionMessageOrder.latest(history).user
+      if (!finalUser || !shouldGenerateAfterReply({ sessionID: input.sessionID, history })) return
 
       yield* input
         .generate({

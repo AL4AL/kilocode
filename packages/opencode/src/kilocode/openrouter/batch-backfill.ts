@@ -23,6 +23,7 @@ export const apply = Effect.fn("OpenRouterBatchBackfill.apply")(function* (input
   const assistant = rows.find((m) => m.info.role === "assistant" && m.info.parentID === input.userMessageID)
   if (!assistant || assistant.info.role !== "assistant") return false
   if (assistant.info.time.completed != null) return false
+  if (assistant.parts.some((p) => p.type === "text" || p.type === "reasoning")) return false
 
   let text = ""
   for (const event of input.events) {

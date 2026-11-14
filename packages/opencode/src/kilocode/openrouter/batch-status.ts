@@ -5,7 +5,15 @@ function race<T>(promise: Promise<T>) {
   return Promise.race([promise, new Promise<T>((resolve) => setTimeout(resolve, 50) as T)])
 }
 
-async function waiting(input: { sessionID: SessionID; batchId: string; customId: string; modelId: string }) {
+type WaitingInput = {
+  sessionID: SessionID
+  batchId: string
+  customId: string
+  modelId: string
+  phase?: "polling" | "cancelling"
+}
+
+async function waiting(input: WaitingInput) {
   const { AppRuntime } = await import("@/effect/app-runtime")
   const { SessionStatus } = await import("@/session/status")
   return AppRuntime.runPromise(
@@ -15,6 +23,7 @@ async function waiting(input: { sessionID: SessionID; batchId: string; customId:
         batchId: input.batchId,
         customId: input.customId,
         modelId: input.modelId,
+        phase: input.phase,
       }),
     ),
   )
@@ -26,8 +35,12 @@ async function idle(sessionID: SessionID) {
   return AppRuntime.runPromise(SessionStatus.Service.use((status) => status.set(sessionID, { type: "idle" })))
 }
 
-export function setWaitingBatch(input: { sessionID: SessionID; batchId: string; customId: string; modelId: string }) {
-  race(waiting(input)).catch(() => undefined)
+export function setWaitingBatch(input: WaitingInput) {
+  race(waiting({ ...input, phase: input.phase ?? "polling" })).catch(() => undefined)
+}
+
+export function setCancellingBatch(input: Omit<WaitingInput, "phase">) {
+  race(waiting({ ...input, phase: "cancelling" })).catch(() => undefined)
 }
 
 export function clearWaitingBatch(sessionID: SessionID) {

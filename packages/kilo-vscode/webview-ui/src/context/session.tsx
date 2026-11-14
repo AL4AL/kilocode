@@ -922,6 +922,7 @@ export const SessionProvider: ParentComponent = (props) => {
           message.next,
           message.batchId,
           message.modelId,
+          message.phase,
         )
         break
 
@@ -1527,6 +1528,7 @@ export const SessionProvider: ParentComponent = (props) => {
     next?: number,
     batchId?: string,
     modelId?: string,
+    phase?: "polling" | "cancelling",
   ) {
     if (removedSessions.has(sessionID)) return
     const shouldAbort = aborts.update(sessionID, newStatus)
@@ -1538,7 +1540,7 @@ export const SessionProvider: ParentComponent = (props) => {
         : newStatus === "offline"
           ? { type: "offline", message: message ?? "" }
           : newStatus === "waiting_batch"
-            ? { type: "waiting_batch", batchId: batchId ?? "", modelId: modelId ?? "" }
+            ? { type: "waiting_batch", batchId: batchId ?? "", modelId: modelId ?? "", phase }
             : { type: newStatus }
     setStatusMap(sessionID, info)
     if (newStatus === "busy" || newStatus === "retry" || newStatus === "waiting_batch") clearClose(sessionID)

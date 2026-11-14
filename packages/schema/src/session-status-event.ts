@@ -50,6 +50,7 @@ export const Info = Schema.Union([
     batchId: Schema.String,
     customId: Schema.String,
     modelId: Schema.String,
+    phase: optional(Schema.Literals(["polling", "cancelling"] as const)),
   }),
   // kilocode_change end
 ]).annotate({ identifier: "SessionStatus" })

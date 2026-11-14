@@ -187,6 +187,7 @@ export interface SessionStatusMessage {
   next?: number
   batchId?: string
   modelId?: string
+  phase?: "polling" | "cancelling"
 }
 
 export interface SessionWakeupMessage {

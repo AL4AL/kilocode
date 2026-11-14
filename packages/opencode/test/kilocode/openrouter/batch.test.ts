@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { buildCreateBody, create, cancel, poll, TERMINAL } from "@/kilocode/openrouter/batch"
+import { buildCreateBody, create, cancel, poll, waitUntilGone, TERMINAL } from "@/kilocode/openrouter/batch"
 import { createBatchFetch } from "../../lib/openrouter-batch-server"
 
 describe("openrouter batch client", () => {
@@ -79,6 +79,26 @@ describe("openrouter batch client", () => {
       if (prevPoll === undefined) delete process.env.KILO_OPENROUTER_BATCH_POLL_MS
       else process.env.KILO_OPENROUTER_BATCH_POLL_MS = prevPoll
     }
+  })
+
+  test("waitUntilGone after cancel", async () => {
+    const mock = createBatchFetch({
+      statuses: [{ status: "in_progress", results: null }],
+    })
+    const created = await create({
+      token: "t",
+      fetch: mock.fetch,
+      payload: {
+        endpoint: "/v1/chat/completions",
+        model: "m",
+        customId: "c1",
+        body: { model: "m", messages: [] },
+      },
+    })
+    process.env.KILO_OPENROUTER_BATCH_POLL_MS = "1"
+    await cancel({ token: "t", id: created.id, fetch: mock.fetch })
+    await waitUntilGone({ token: "t", id: created.id, fetch: mock.fetch })
+    expect(mock.deletes).toEqual([created.id])
   })
 
   test("poll retries transient 404 after create", async () => {
