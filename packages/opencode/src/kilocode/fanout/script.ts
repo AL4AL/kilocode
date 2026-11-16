@@ -36,14 +36,16 @@ const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor as
 ) => (...args: unknown[]) => Promise<unknown>
 
 /** Run the parent-written script. spawn is the only binding. */
-export async function runScript(source: string, spawn: (call: SpawnCall) => Promise<void>) {
-  const fn = new AsyncFunction(
-    "spawn",
-    `"use strict";\n${source}`,
-  )
-  await fn(async (first: unknown, second?: unknown) => {
+export async function runScript(source: string, enqueue: (call: SpawnCall) => Promise<void>) {
+  const queued: Promise<void>[] = []
+  const hook = async (first: unknown, second?: unknown) => {
     const call = spawnCall(first, second)
     if (!call) throw new Error("spawn() needs a prompt string or { prompt }")
-    await spawn(call)
-  })
+    const step = enqueue(call)
+    queued.push(step)
+    return step
+  }
+  const fn = new AsyncFunction("spawn", `"use strict";\n${source}`)
+  await fn(hook)
+  await Promise.all(queued)
 }

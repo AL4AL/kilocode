@@ -1,11 +1,50 @@
-Run a script that starts many subagent sessions.
+Run a short JavaScript script that queues many child agent sessions. Use this instead of dozens of task calls when each child is an independent unit of work.
 
-The script is JavaScript. Its only agent API is spawn. Call spawn once per unit of work. The script decides how many children exist. A file list is one possible script, not a special mode.
+## Script environment
+
+- Strict mode. Only `spawn` is provided—no `require`, `import`, `process`, `fetch`, `fs`, or `console`.
+- You may use normal JS: `for`, `Array.from`, template strings, `Math`, `JSON`, etc.
+- `spawn` returns a Promise. You may `await spawn(...)` in a loop or call `spawn(...)` without await; the runtime waits for every enqueue before this tool returns.
+
+## spawn API
 
 spawn("prompt")
-spawn("prompt", { label, paths, isolate })
+spawn("prompt", { label: "short row title", paths: ["src/a.ts"], isolate: false })
 spawn({ prompt, label, paths, isolate })
 
-paths tells the child which files it may change. isolate gives that child its own git worktree. The tool's isolate flag does that for every child.
+- **prompt** — full instructions for that child (what to do, which tools, where to write).
+- **label** — short title for the chat roster row (defaults to a clip of prompt).
+- **paths** — optional globs the child may edit. Omit for full workspace access; set disjoint paths when children share one directory.
+- **isolate** — when true, this child gets its own git worktree. The tool-level `isolate` flag sets this for every child.
 
-cap is how many children run at once. Extra spawn() calls wait. Children are real sessions under this one. Their model calls keep running if the network drops or the editor closes, and they resume when the server starts again. Results come back one at a time. Do not poll, sleep, or start the same work yourself.
+## cap
+
+Optional `cap` (default 4, max 64) is how many children run at once. Extra `spawn()` calls stay pending until a slot frees.
+
+## What happens after you call this tool
+
+1. This tool returns immediately after the script finishes enqueueing. It does **not** wait for children to finish.
+2. Children are real sessions under this chat. They run in **this workspace directory** unless `isolate` / worktree applies.
+3. Progress appears on the **spawn_script** card in the transcript (counts + child list). Do not poll the filesystem or relaunch the same batch.
+4. Each child's final report is delivered to **you** as a synthetic user message, **one at a time**, when you are idle. Further reports wait in queue. Do not use `task` or a second `spawn_script` to "check" the same work.
+5. Children keep running through network loss or a closed editor; jobs resume when `kilo serve` restarts.
+
+## Example: N agents each create one random file
+
+Use disjoint paths or one file name per child in the prompt:
+
+for (let i = 0; i < 100; i++) {
+  const name = `fanout-${i}-${Math.random().toString(36).slice(2, 8)}.txt`;
+  spawn(`Create a file named ${name} in the workspace root using the write tool. Put one line of text inside. Reply with the path you wrote.`, {
+    label: `file-${i}`,
+    paths: [name],
+  });
+}
+
+Raise `cap` when you enqueue many children (e.g. `cap: 16`).
+
+## When not to use this
+
+- One or two subagents — use `task`.
+- Children must talk to each other in one shared turn — use `task` or redesign prompts.
+- You need results in this same turn — `spawn_script` always finishes enqueueing first; results come later.

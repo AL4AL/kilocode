@@ -1,5 +1,19 @@
 import { describe, expect, test } from "bun:test"
-import { spawnCall } from "@/kilocode/fanout/script"
+import { runScript, spawnCall } from "@/kilocode/fanout/script"
+
+describe("runScript", () => {
+  test("waits for spawn calls when the script does not await them", async () => {
+    let n = 0
+    await runScript(
+      `for (let i = 0; i < 5; i++) spawn("job " + i);`,
+      async () => {
+        n += 1
+        await Promise.resolve()
+      },
+    )
+    expect(n).toBe(5)
+  })
+})
 
 describe("spawnCall", () => {
   test("reads a prompt string", () => {

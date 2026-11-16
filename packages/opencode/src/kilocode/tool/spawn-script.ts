@@ -12,7 +12,7 @@ const MAX_CAP = 64
 const Params = Schema.Struct({
   script: Schema.String.annotate({
     description:
-      "JavaScript source. The only agent API is spawn(prompt, opts?) or spawn({ prompt, label, paths, isolate }). Call spawn once per unit of work.",
+      "JavaScript (strict). Only spawn exists—no require/import. spawn(prompt, opts?) or spawn({ prompt, label, paths, isolate }). One spawn per unit of work; await is optional.",
   }),
   cap: Schema.optional(Schema.Number).annotate({
     description: "How many children run at once. Defaults to 4. Further spawn() calls wait.",
@@ -91,7 +91,8 @@ export const SpawnScriptTool = Tool.define<typeof Params, Meta, never, "spawn_sc
             output: ran.message,
           }
         }
-        const title = `Spawned ${counts.pending + counts.running + counts.done + counts.failed} agents`
+        const total = counts.pending + counts.running + counts.done + counts.failed
+        const title = total === 1 ? "Queued 1 child" : `Queued ${total} children`
         yield* ctx.metadata({
           title,
           metadata: { scriptId: id, ...counts },
@@ -100,9 +101,12 @@ export const SpawnScriptTool = Tool.define<typeof Params, Meta, never, "spawn_sc
           title,
           metadata: { scriptId: id, ...counts },
           output: [
-            title,
-            `Up to ${limit} run at once. The rest wait.`,
-            "Each result arrives in a later turn. Do not poll or repeat this work.",
+            `${title} (script ${id}).`,
+            `Counts: ${counts.pending} pending, ${counts.running} running, ${counts.done} done, ${counts.failed} failed.`,
+            `Up to ${limit} children run at once.`,
+            "Children use this workspace unless you set isolate. Each is a full agent (write, bash, etc.).",
+            "This tool result only confirms enqueue. Watch the spawn_script card for live status.",
+            "Each child's report is delivered here later, one per turn when you are idle. Do not poll, sleep, list dirs, or call task/spawn_script again for the same batch.",
             "Children keep running if the network drops or the editor closes.",
           ].join("\n"),
         }
