@@ -25,6 +25,7 @@ import { LayerNode } from "@opencode-ai/core/effect/layer-node"
 import { KilocodeWatcher } from "@/kilocode/watcher"
 import { AppNodeBuilder } from "@opencode-ai/core/effect/app-node-builder" // kilocode_change
 import { armBatchResumeLoop } from "@/kilocode/openrouter/batch-resume" // kilocode_change
+import { armFanoutResume } from "@/kilocode/fanout/resume"
 
 const log = Log.create({ service: "kilocode-bootstrap" })
 
@@ -63,7 +64,10 @@ export namespace KilocodeBootstrap {
         )
         // Re-arm this directory's persisted wakeups on every instance start: overdue ones
         // fire immediately, the rest get their timers. A failure must not block bootstrap.
-        yield* Effect.sync(() => armBatchResumeLoop()) // kilocode_change
+        yield* Effect.sync(() => {
+          armBatchResumeLoop()
+          armFanoutResume()
+        }) // kilocode_change
         const inst = yield* InstanceRef
         if (inst) {
           yield* wake.adopt(inst.directory).pipe(

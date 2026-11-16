@@ -61,6 +61,33 @@ export const BackgroundJobsQuery = Schema.Struct({
   sessionID: SessionID,
 })
 
+export const FanoutQuery = Schema.Struct({
+  ...WorkspaceRoutingQueryFields,
+  scriptID: Schema.String,
+  offset: Schema.optional(Schema.NumberFromString.check(Schema.isInt(), Schema.isGreaterThanOrEqualTo(0))),
+  limit: Schema.optional(Schema.NumberFromString.check(Schema.isInt(), Schema.isBetween({ minimum: 1, maximum: 100 }))),
+})
+
+export const FanoutJob = Schema.Struct({
+  id: Schema.String,
+  sessionId: Schema.optional(Schema.String),
+  label: Schema.String,
+  title: Schema.optional(Schema.String),
+  status: Schema.Literals(["pending", "running", "done", "failed"]),
+})
+
+export const FanoutPage = Schema.Struct({
+  scriptId: Schema.String,
+  total: Schema.Number,
+  pending: Schema.Number,
+  running: Schema.Number,
+  done: Schema.Number,
+  failed: Schema.Number,
+  offset: Schema.Number,
+  sessionIds: Schema.Array(Schema.String),
+  jobs: Schema.Array(FanoutJob),
+})
+
 export const RemoveSkillPayload = Schema.Struct({
   location: Schema.String,
 })
@@ -168,6 +195,7 @@ export const KilocodePaths = {
   sessionBoard: `${root}/session/:sessionID/board`,
   resetSessionBoard: `${root}/session/:sessionID/board/reset`,
   backgroundJobs: `${root}/background-jobs`,
+  fanout: `${root}/fanout`,
   backgroundJobCancel: `${root}/background-jobs/:jobID/cancel`,
   backgroundJobPromote: `${root}/background-jobs/:jobID/promote`,
   retentionStatus: `${root}/retention`,
@@ -467,6 +495,17 @@ export const KilocodeApi = HttpApi.make("kilocode")
             identifier: "kilocode.sessionModelUsage",
             summary: "Get session model usage",
             description: "Get token usage and direct cost by model for the complete top-level session tree.",
+          }),
+        ),
+        HttpApiEndpoint.get("fanout", KilocodePaths.fanout, {
+          query: FanoutQuery,
+          success: described(FanoutPage, "Spawned child page"),
+          error: HttpApiError.NotFound,
+        }).annotateMerge(
+          OpenApi.annotations({
+            identifier: "kilocode.fanout",
+            summary: "List spawned children",
+            description: "Page the children started by one spawn script.",
           }),
         ),
         HttpApiEndpoint.get("backgroundJobs", KilocodePaths.backgroundJobs, {

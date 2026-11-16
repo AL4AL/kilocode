@@ -25,6 +25,13 @@ type Ctx = {
   speechToTextSource: () => SpeechToTextSource | undefined
   modelUsage: (message: ModelUsageMessage) => Promise<void>
   backgroundJobs: (sessionID: string, requestID: string) => Promise<void>
+  fanout: (
+    scriptID: string,
+    offset: number,
+    limit: number,
+    requestID: string,
+    sessionID?: string,
+  ) => Promise<void>
   board: (message: Record<string, unknown>) => Promise<boolean>
   cancelBackgroundJob: (jobID: string, sessionID: string, requestID: string) => Promise<void>
   promoteBackgroundJob: (jobID: string, sessionID: string) => Promise<void>
@@ -40,6 +47,30 @@ async function routeBackgroundMessage(
     return true
   }
   if (message.type === "requestSessionBoard" || message.type === "resetSessionBoard") return ctx.board(message)
+  if (message.type === "requestFanout") {
+    const input = message as {
+      scriptID?: unknown
+      offset?: unknown
+      limit?: unknown
+      requestID?: unknown
+      sessionID?: unknown
+    }
+    if (
+      typeof input.scriptID === "string" &&
+      typeof input.requestID === "string" &&
+      typeof input.offset === "number" &&
+      typeof input.limit === "number"
+    ) {
+      await ctx.fanout(
+        input.scriptID,
+        input.offset,
+        input.limit,
+        input.requestID,
+        typeof input.sessionID === "string" ? input.sessionID : undefined,
+      )
+    }
+    return true
+  }
   if (message.type === "requestBackgroundJobs") {
     if (typeof message.sessionID === "string" && typeof message.requestID === "string") {
       await ctx.backgroundJobs(message.sessionID, message.requestID)

@@ -22,12 +22,13 @@ import { normalizeUrls } from "@/kilocode/util/url" // kilocode_change
 import { CommandTimeout } from "@/kilocode/command-timeout" // kilocode_change
 import { heredocs } from "@/kilocode/tool/shell-heredoc" // kilocode_change
 import { unparsed } from "@/kilocode/tool/shell-unparsed" // kilocode_change
-import { pattern } from "@/kilocode/tool/shell-pattern" // kilocode_change
+import { inert, pattern } from "@/kilocode/tool/shell-pattern" // kilocode_change
 import { ChildProcess } from "effect/unstable/process"
 import { ChildProcessSpawner } from "effect/unstable/process/ChildProcessSpawner"
 import { ShellPrompt, type Parameters } from "./shell/prompt"
 import { BashArity } from "@/permission/arity"
 import { mutates as mutatesGit } from "@/kilocode/sandbox/git" // kilocode_change
+import { assertMutablePath } from "@/kilocode/agent-manager/protection" // kilocode_change
 import * as SandboxPolicy from "@/kilocode/sandbox/policy" // kilocode_change
 
 export { Parameters } from "./shell/prompt"
@@ -372,6 +373,7 @@ export const ShellPermission = Effect.gen(function* () {
     ps: boolean,
     shell: string,
     instance: InstanceContext,
+    sessionID?: string, // kilocode_change
   ) {
     const scan: Scan = {
       dirs: new Set<string>(),
@@ -397,7 +399,9 @@ export const ShellPermission = Effect.gen(function* () {
         for (const arg of pathArgs(command, ps, kind === "cmd")) {
           const resolved = yield* argpath(arg, cwd, ps, shell)
           yield* Effect.logInfo("resolved path", { arg, resolved })
-          if (!resolved || containsPath(resolved, instance)) continue
+          if (!resolved) continue
+          if (sessionID && accessKind !== "read") yield* Effect.promise(() => assertMutablePath(resolved, sessionID)) // kilocode_change
+          if (containsPath(resolved, instance)) continue
           const dir = (yield* fs.isDir(resolved)) ? resolved : path.dirname(resolved)
           scan.dirs.add(dir)
           if (accessKind !== "read") scan.access = "unknown"
@@ -409,6 +413,21 @@ export const ShellPermission = Effect.gen(function* () {
         scan.always.add(BashArity.prefix(tokens).join(" ") + " *")
       }
     }
+
+    // kilocode_change start - a redirect writes a file even when the command itself is not a file tool
+    if (sessionID) {
+      for (const node of root.descendantsOfType("file_redirect")) {
+        if (!node || inert(node)) continue
+        for (let i = 0; i < node.childCount; i++) {
+          const child = node.child(i)
+          if (!child || child.type === "file_redirect_operator") continue
+          const resolved = yield* argpath(child.text, cwd, ps, shell)
+          if (!resolved) continue
+          yield* Effect.promise(() => assertMutablePath(resolved, sessionID))
+        }
+      }
+    }
+    // kilocode_change end
 
     // kilocode_change start - fail closed on commands the grammar failed to parse (#12326)
     const lost = unparsed(root, nodes.length)
@@ -427,7 +446,7 @@ export const ShellPermission = Effect.gen(function* () {
     yield* Effect.scoped(
       Effect.gen(function* () {
         const tree = yield* Effect.acquireRelease(parse(input.command, ps), (tree) => Effect.sync(() => tree.delete()))
-        const scan = yield* collect(tree.rootNode, input.cwd, ps, input.shell, instance)
+        const scan = yield* collect(tree.rootNode, input.cwd, ps, input.shell, instance, ctx.sessionID) // kilocode_change
         const metadata = heredocs(tree.rootNode, ShellID.toKind(Shell.name(input.shell))) // kilocode_change
         if (!containsPath(input.cwd, instance)) {
           scan.dirs.add(input.cwd)

@@ -1,4 +1,7 @@
-export function assertMutablePath(filepath: string) {
+import { assertFanoutWrite } from "@/kilocode/fanout/write-guard"
+
+export async function assertMutablePath(filepath: string, sessionID?: string) {
+  await assertFanoutWrite(sessionID, filepath)
   const parts = filepath.split(/[\\/]/)
   const file = parts.at(-1)
   const dir = parts.at(-2)

@@ -1,0 +1,11 @@
+Run a script that starts many subagent sessions.
+
+The script is JavaScript. Its only agent API is spawn. Call spawn once per unit of work. The script decides how many children exist. A file list is one possible script, not a special mode.
+
+spawn("prompt")
+spawn("prompt", { label, paths, isolate })
+spawn({ prompt, label, paths, isolate })
+
+paths tells the child which files it may change. isolate gives that child its own git worktree. The tool's isolate flag does that for every child.
+
+cap is how many children run at once. Extra spawn() calls wait. Children are real sessions under this one. Their model calls keep running if the network drops or the editor closes, and they resume when the server starts again. Results come back one at a time. Do not poll, sleep, or start the same work yourself.

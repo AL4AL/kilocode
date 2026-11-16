@@ -16,6 +16,8 @@ import { MemorySaveTool } from "./memory-save"
 import { NotifyUserTool } from "./notify-user"
 import { OpenPlanTool } from "./open-plan"
 import { ScheduleWakeupTool } from "./schedule-wakeup"
+import { SpawnScriptTool } from "./spawn-script"
+import { ScopeReplyTool } from "./scope-reply"
 import { SendFileTool } from "./send-file"
 import * as Tool from "../../tool/tool"
 import { Flag } from "@opencode-ai/core/flag/flag"
@@ -119,6 +121,8 @@ export namespace KiloToolRegistry {
       const cronCreate = yield* CronCreateTool
       const cronList = yield* CronListTool
       const cronDelete = yield* CronDeleteTool
+      const spawn = yield* SpawnScriptTool
+      const scopeReply = yield* ScopeReplyTool
       const board = yield* Effect.all({
         boardRead: BoardReadTool,
         boardPost: BoardPostTool,
@@ -145,6 +149,8 @@ export namespace KiloToolRegistry {
           cronCreate,
           cronList,
           cronDelete,
+          spawn,
+          scopeReply,
           ...board,
         }
       const tools = yield* Effect.all({
@@ -171,6 +177,8 @@ export namespace KiloToolRegistry {
         cronCreate,
         cronList,
         cronDelete,
+        spawn,
+        scopeReply,
         ...board,
         ...tools,
       }
@@ -199,6 +207,8 @@ export namespace KiloToolRegistry {
       cronCreate?: Tool.Info
       cronList?: Tool.Info
       cronDelete?: Tool.Info
+      spawn?: Tool.Info
+      scopeReply?: Tool.Info
       boardRead?: Tool.Info
       goalReport?: Tool.Info
       goal?: Tool.Info
@@ -230,6 +240,8 @@ export namespace KiloToolRegistry {
       const cronCreate = tools.cronCreate ? yield* Tool.init(tools.cronCreate) : undefined
       const cronList = tools.cronList ? yield* Tool.init(tools.cronList) : undefined
       const cronDelete = tools.cronDelete ? yield* Tool.init(tools.cronDelete) : undefined
+      const spawn = tools.spawn ? yield* Tool.init(tools.spawn) : undefined
+      const scopeReply = tools.scopeReply ? yield* Tool.init(tools.scopeReply) : undefined
       const report = tools.goalReport ? { goalReport: yield* Tool.init(tools.goalReport) } : {}
       const goal = tools.goal ? { goal: yield* Tool.init(tools.goal) } : {}
       const board =
@@ -260,6 +272,8 @@ export namespace KiloToolRegistry {
         cronCreate,
         cronList,
         cronDelete,
+        spawn,
+        scopeReply,
         notify: base.notify,
         send: base.send,
       }
@@ -331,6 +345,8 @@ export namespace KiloToolRegistry {
       cronCreate?: Tool.Def
       cronList?: Tool.Def
       cronDelete?: Tool.Def
+      spawn?: Tool.Def
+      scopeReply?: Tool.Def
       boardRead?: Tool.Def
       goalReport?: Tool.Def
       goal?: Tool.Def
@@ -365,6 +381,8 @@ export namespace KiloToolRegistry {
       ...((Flag.KILO_CLIENT === "cli" || Flag.KILO_CLIENT === "vscode") && tools.cronCreate ? [tools.cronCreate] : []),
       ...((Flag.KILO_CLIENT === "cli" || Flag.KILO_CLIENT === "vscode") && tools.cronList ? [tools.cronList] : []),
       ...((Flag.KILO_CLIENT === "cli" || Flag.KILO_CLIENT === "vscode") && tools.cronDelete ? [tools.cronDelete] : []),
+      ...((Flag.KILO_CLIENT === "cli" || Flag.KILO_CLIENT === "vscode") && tools.spawn ? [tools.spawn] : []),
+      ...((Flag.KILO_CLIENT === "cli" || Flag.KILO_CLIENT === "vscode") && tools.scopeReply ? [tools.scopeReply] : []),
       tools.managerModels,
       ...(Flag.KILO_CLIENT === "vscode" ? [tools.manager] : []),
       ...(Flag.KILO_CLIENT === "vscode" && tools.browser ? [tools.browser] : []),

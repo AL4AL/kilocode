@@ -24,6 +24,11 @@ import { useServer } from "./server"
 import { useProvider } from "./provider"
 import { useConfig } from "./config"
 import { useLanguage } from "./language"
+import {
+  sessionFamily as buildSessionFamily,
+  sessionIDs as taskSessionIDs,
+  visibleToolParts as visibleTools,
+} from "./session-family-tree"
 import { createCostAlertHandler } from "./cost-alert"
 import { createMcpAuth } from "./mcp-auth"
 import { showToast } from "@kilocode/kilo-ui/toast"
@@ -66,7 +71,6 @@ import {
   buildFamilyLabelsFromTools,
   buildCostBreakdown,
   buildSessionToolParts,
-  childID,
   ancestry,
   inUse,
   dropSet,
@@ -1712,52 +1716,16 @@ export const SessionProvider: ParentComponent = (props) => {
     }
   }
 
-  function visibleToolParts(sessionID: string, messages: Message[]): ToolPart[] {
-    const tools = store.toolParts[sessionID]
-    if (!tools || tools.length === 0 || messages.length === 0) return []
-    const ids = new Set(messages.map((msg) => msg.id))
-    return tools.filter((part) => !part.messageID || ids.has(part.messageID))
-  }
-
-  /**
-   * BFS walk over message parts to discover all session IDs in a session's
-   * family tree (self + subagents + sub-subagents). Reads directly from the
-   * store so it's reactive — automatically updates when new parts arrive.
-   */
-  function sessionIDs(rootID: string, source: (sessionID: string) => Message[]): Set<string> {
-    const ids = new Set<string>([rootID])
-    const queue = [rootID]
-    while (queue.length > 0) {
-      const sid = queue.pop()!
-      const tools = store.toolParts[sid]
-      if (!tools || tools.length === 0 || !tools.some((t) => t.tool === "task")) continue
-      for (const p of visibleToolParts(sid, source(sid))) {
-        const child = childID(
-          p as {
-            type: string
-            tool?: string
-            metadata?: { sessionId?: string }
-            state?: { metadata?: { sessionId?: string } }
-          },
-        )
-        if (child && !ids.has(child)) {
-          ids.add(child)
-          queue.push(child)
-        }
-      }
-    }
-    return ids
-  }
-
   const lineage = createMemo(() => ancestry(store.sessions, store.toolParts, closeMap))
 
-  function sessionFamily(rootID: string): Set<string> {
-    const ids = new Set([rootID])
-    for (const id of ids) {
-      for (const child of lineage().children.get(id) ?? []) ids.add(child)
-    }
-    return ids
-  }
+  const visibleToolParts = (sessionID: string, messages: Message[]) =>
+    visibleTools(store.toolParts, sessionID, messages)
+
+  const sessionIDs = (rootID: string, source: (sessionID: string) => Message[]) =>
+    taskSessionIDs(store.toolParts, rootID, source)
+
+  const sessionFamily = (rootID: string) =>
+    buildSessionFamily(rootID, (id) => lineage().children.get(id) ?? [])
 
   function modelUsageRelated(sessionID: string, parentID?: string | null): boolean {
     const current = currentSessionID()

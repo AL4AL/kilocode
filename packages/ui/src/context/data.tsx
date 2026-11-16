@@ -77,6 +77,28 @@ export type OpenContentFn = (content: string, language?: string) => void // kilo
 // candidates were rendered for, so the extension resolves its workspace
 // directory from that explicit id instead of whatever session is current.
 export type ValidateFilesFn = (sessionID: string, paths: string[]) => Promise<string[]>
+
+export type FanoutJob = {
+  id: string
+  sessionId?: string
+  label: string
+  title?: string
+  status: "pending" | "running" | "done" | "failed"
+}
+
+export type FanoutPage = {
+  scriptId: string
+  total: number
+  pending: number
+  running: number
+  done: number
+  failed: number
+  offset: number
+  sessionIds: string[]
+  jobs: FanoutJob[]
+}
+
+export type FanoutFn = (scriptID: string, offset: number, limit: number) => Promise<FanoutPage | undefined>
 // kilocode_change end
 
 export const { use: useData, provider: DataProvider } = createSimpleContext({
@@ -91,6 +113,7 @@ export const { use: useData, provider: DataProvider } = createSimpleContext({
     onOpenUrl?: OpenUrlFn // kilocode_change
     onOpenContent?: OpenContentFn // kilocode_change
     onValidateFiles?: ValidateFilesFn // kilocode_change
+    onFanout?: FanoutFn // kilocode_change
     // kilocode_change start - web links open in the Integrated Browser
     browserLinks?: boolean // kilocode_change
     // kilocode_change end
@@ -109,6 +132,7 @@ export const { use: useData, provider: DataProvider } = createSimpleContext({
       openUrl: props.onOpenUrl, // kilocode_change
       openContent: props.onOpenContent, // kilocode_change
       validateFiles: props.onValidateFiles, // kilocode_change
+      fanout: props.onFanout, // kilocode_change
       // kilocode_change start
       get browserLinks() {
         // kilocode_change

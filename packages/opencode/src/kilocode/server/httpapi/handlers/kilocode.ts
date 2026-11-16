@@ -49,6 +49,7 @@ import { Database } from "@opencode-ai/core/database/database"
 import { BoardStore } from "@/kilocode/board/store"
 import { Skill } from "@/skill"
 import { BackgroundJob } from "@/background/job"
+import { FanoutStore } from "@/kilocode/fanout/store"
 import { SessionRunState } from "@/session/run-state"
 import { SessionDrain } from "@/kilocode/session/drain"
 import { Wakeup } from "@/kilocode/wakeup"
@@ -77,6 +78,7 @@ import {
   DrainSessionPayload,
   BackgroundJobInfo,
   BackgroundJobsQuery,
+  FanoutQuery,
   SessionBoardQuery,
   ResetSessionBoardPayload,
   RetentionRunPayload,
@@ -533,6 +535,12 @@ export const kilocodeHandlers = HttpApiBuilder.group(InstanceHttpApi, "kilocode"
       return usage
     })
 
+    const fanout = Effect.fn("KilocodeHttpApi.fanout")(function* (ctx: { query: typeof FanoutQuery.Type }) {
+      const page = FanoutStore.page(ctx.query.scriptID, ctx.query.offset ?? 0, ctx.query.limit ?? 50)
+      if (!page) return yield* new HttpApiError.NotFound({})
+      return page
+    })
+
     const backgroundJobs = Effect.fn("KilocodeHttpApi.backgroundJobs")(function* (ctx: {
       query: typeof BackgroundJobsQuery.Type
     }) {
@@ -632,6 +640,7 @@ export const kilocodeHandlers = HttpApiBuilder.group(InstanceHttpApi, "kilocode"
       .handle("agentManagerReply", agentManagerReply)
       .handle("agentManagerReject", agentManagerReject)
       .handle("sessionModelUsage", sessionModelUsage)
+      .handle("fanout", fanout)
       .handle("backgroundJobs", backgroundJobs)
       .handle("backgroundJobCancel", backgroundJobCancel)
       .handle("backgroundJobPromote", backgroundJobPromote)

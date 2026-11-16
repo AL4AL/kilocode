@@ -107,7 +107,7 @@ export const EditTool = Tool.define(
           const filePath = path.isAbsolute(params.filePath)
             ? params.filePath
             : path.join(instance.directory, params.filePath)
-          assertMutablePath(filePath) // kilocode_change
+          yield* Effect.promise(() => assertMutablePath(filePath, ctx.sessionID)) // kilocode_change
           yield* assertExternalDirectoryEffect(ctx, filePath)
 
           let diff = ""

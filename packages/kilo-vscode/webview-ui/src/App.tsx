@@ -1,5 +1,6 @@
 import { Component, createSignal, createMemo, createEffect, Switch, Match, Show, onMount, onCleanup } from "solid-js"
-import { DataProvider } from "@kilocode/kilo-ui/context/data"
+import { DataProvider, type FanoutPage } from "@kilocode/kilo-ui/context/data"
+import { noteFanout } from "./context/fanout-family"
 import { BoardNavigationProvider } from "@kilocode/kilo-ui/context/board-navigation"
 import Settings from "./components/settings/Settings"
 import ProfileView from "./components/profile/ProfileView"
@@ -196,7 +197,30 @@ export const DataBridge: Component<{ children: any }> = (props) => {
 
   // File existence validation for code span candidates
   const pending = new Map<string, (existing: string[]) => void>()
+  const fanoutPending = new Map<string, (page: FanoutPage | undefined) => void>()
   const counter = { n: 0 }
+  const fanout = (scriptID: string, offset: number, limit: number) => {
+    const requestID = `fanout-${++counter.n}`
+    return new Promise<FanoutPage | undefined>((resolve) => {
+      const timer = setTimeout(() => {
+        if (!fanoutPending.has(requestID)) return
+        fanoutPending.delete(requestID)
+        resolve(undefined)
+      }, 8000)
+      fanoutPending.set(requestID, (page) => {
+        clearTimeout(timer)
+        resolve(page)
+      })
+      vscode.postMessage({
+        type: "requestFanout",
+        requestID,
+        scriptID,
+        sessionID: session.currentSessionID(),
+        offset,
+        limit,
+      })
+    })
+  }
   const validateFiles = (sessionID: string, paths: string[]): Promise<string[]> => {
     const id = `vf-${++counter.n}`
     return new Promise((resolve, reject) => {
@@ -218,6 +242,16 @@ export const DataBridge: Component<{ children: any }> = (props) => {
   }
   const handler = (event: MessageEvent) => {
     const msg = event.data
+    if (msg?.type === "fanoutLoaded" && msg.requestID) {
+      if (msg.sessionID && msg.page?.scriptId) {
+        noteFanout(msg.sessionID, msg.page.scriptId, msg.page.sessionIds ?? [], msg.page.running ?? 0)
+      }
+      const cb = fanoutPending.get(msg.requestID)
+      if (cb) {
+        fanoutPending.delete(msg.requestID)
+        cb(msg.page)
+      }
+    }
     if (msg?.type === "validateFilesResult" && msg.id) {
       const cb = pending.get(msg.id)
       if (cb) {
@@ -248,6 +282,7 @@ export const DataBridge: Component<{ children: any }> = (props) => {
       onOpenUrl={openUrl}
       onOpenContent={openContent}
       onValidateFiles={validateFiles}
+      onFanout={fanout}
       browserLinks={
         config.settings().browserAutomation === true &&
         config.settings().agentManagerBrowserOpenLinksIn === "integrated" &&

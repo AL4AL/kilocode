@@ -45,7 +45,7 @@ export const WriteTool = Tool.define(
           const filepath = path.isAbsolute(params.filePath)
             ? params.filePath
             : path.join(instance.directory, params.filePath)
-          assertMutablePath(filepath) // kilocode_change
+          yield* Effect.promise(() => assertMutablePath(filepath, ctx.sessionID)) // kilocode_change
           yield* assertExternalDirectoryEffect(ctx, filepath)
 
           const exists = yield* fs.existsSafe(filepath)

@@ -61,6 +61,15 @@ export interface RequestBackgroundJobsMessage {
   requestID: string
 }
 
+export interface RequestFanoutMessage {
+  type: "requestFanout"
+  requestID: string
+  scriptID: string
+  sessionID?: string
+  offset: number
+  limit: number
+}
+
 export interface CancelBackgroundJobMessage {
   type: "cancelBackgroundJob"
   jobID: string
@@ -1764,6 +1773,7 @@ export type WebviewMessage =
   | ResumeSessionRequest
   | AbortRequest
   | RequestBackgroundJobsMessage
+  | RequestFanoutMessage
   | RequestSessionBoardMessage
   | ResetSessionBoardMessage
   | CancelBackgroundJobMessage

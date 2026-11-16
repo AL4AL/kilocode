@@ -1,0 +1,3 @@
+Answer a scope request from another spawned agent.
+
+You receive the request id, the paths, and the ask. allow lets that agent edit the path. deny refuses it. patch means you will make the change yourself. Only the agent that owns the path may answer.

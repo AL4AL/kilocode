@@ -105,6 +105,7 @@ import {
   watchAutocompleteConfig,
 } from "./services/autocomplete/settings"
 import { routeEarlyMessage } from "./kilo-provider/early-message"
+import { fetchFanout } from "./kilo-provider/fanout-page"
 import * as Board from "./kilo-provider/session-board"
 import { handleModelUsageMessage } from "./kilo-provider/model-usage"
 import { handleForkSession } from "./kilo-provider/fork-session"
@@ -1308,6 +1309,27 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
           speechToTextSource: () => this.speechToTextSource(),
           modelUsage: (msg) => handleModelUsageMessage(msg, this.extensionContext, (value) => this.postMessage(value)),
           backgroundJobs: (sessionID, requestID) => this.fetchAndSendBackgroundJobs(sessionID, requestID),
+          fanout: async (scriptID, offset, limit, requestID, sessionID) => {
+            const parent = sessionID ?? this.currentSession?.id
+            try {
+              const page = await fetchFanout({
+                config: this.connectionService.getServerConfig(),
+                directory: this.getWorkspaceDirectory(parent),
+                scriptID,
+                offset,
+                limit,
+              })
+              if (parent && page) this.trackFanout(parent, page.sessionIds)
+              this.postMessage({ type: "fanoutLoaded", requestID, sessionID: parent, page })
+            } catch (error) {
+              console.error("[Kilo New] KiloProvider: Failed to fetch fan-out page:", error)
+              this.postMessage({
+                type: "fanoutLoaded",
+                requestID,
+                error: getErrorMessage(error) || "Failed to fetch spawned agents",
+              })
+            }
+          },
           board: (msg) => this.handleBoardMessage(msg),
           cancelBackgroundJob: (jobID, sessionID, requestID) => this.cancelBackgroundJob(jobID, sessionID, requestID),
           promoteBackgroundJob: (jobID, sessionID) => this.promoteBackgroundJob(jobID, sessionID),
@@ -2472,6 +2494,17 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
    * Handle syncing a child session (e.g. spawned by the task tool).
    * Tracks the session for SSE events and fetches its messages.
    */
+  /** Track spawned children so their permission and question events reach this chat. */
+  private trackFanout(parentID: string, ids: readonly string[]) {
+    const dir = this.sessionDirectories.get(parentID)
+    const git = this.sessionGitDirectories.get(parentID)
+    for (const id of ids) {
+      if (!this.trackedSessionIds.has(id)) this.trackedSessionIds.add(id)
+      if (dir && !this.sessionDirectories.has(id)) this.sessionDirectories.set(id, dir)
+      if (git && !this.sessionGitDirectories.has(id)) this.sessionGitDirectories.set(id, git)
+    }
+  }
+
   private async handleSyncSession(sessionID: string, parentSessionID?: string): Promise<void> {
     if (!this.client) return
     if (this.syncedChildSessions.has(sessionID)) return
@@ -5590,6 +5623,15 @@ export class KiloProvider implements vscode.WebviewViewProvider, TelemetryProper
     // Extract sessionID from the event
     if (event.type === "session.created" && this.adoptPendingFollowup(event.properties.info)) {
       return
+    }
+
+    if (event.type === "session.created") {
+      const parent = event.properties.info.parentID
+      const child = event.properties.info.id
+      if (parent && this.trackedSessionIds.has(parent) && !this.trackedSessionIds.has(child)) {
+        this.trackedSessionIds.add(child)
+        void this.handleSyncSession(child, parent)
+      }
     }
 
     const sessionID = this.resolveEventSessionId(event)

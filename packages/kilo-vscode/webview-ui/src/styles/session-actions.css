@@ -961,3 +961,22 @@
     margin-inline: 0;
   }
 }
+
+[data-component="spawn-strip"] {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--session-action-radius);
+  background: transparent;
+  color: var(--vscode-descriptionForeground);
+  font-family: var(--font-family-sans);
+  font-size: var(--kilo-font-size-12);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+}
+
+[data-component="spawn-strip"]:hover {
+  color: var(--vscode-foreground);
+}

@@ -1108,6 +1108,7 @@ export type SessionStatus =
       batchId: string
       customId: string
       modelId: string
+      phase?: "polling" | "cancelling"
     }
 
 export type QuestionOption = {
@@ -18251,6 +18252,57 @@ export type KilocodeSessionModelUsageResponses = {
 
 export type KilocodeSessionModelUsageResponse =
   KilocodeSessionModelUsageResponses[keyof KilocodeSessionModelUsageResponses]
+
+export type KilocodeFanoutData = {
+  body?: never
+  path?: never
+  query: {
+    directory?: string
+    workspace?: string
+    scriptID: string
+    offset?: string
+    limit?: string
+  }
+  url: "/kilocode/fanout"
+}
+
+export type KilocodeFanoutErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+  /**
+   * Not found
+   */
+  404: NotFoundError
+}
+
+export type KilocodeFanoutError = KilocodeFanoutErrors[keyof KilocodeFanoutErrors]
+
+export type KilocodeFanoutResponses = {
+  /**
+   * Spawned child page
+   */
+  200: {
+    scriptId: string
+    total: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
+    pending: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
+    running: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
+    done: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
+    failed: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
+    offset: number | "NaN" | "Infinity" | "-Infinity" | "Infinity" | "-Infinity" | "NaN"
+    sessionIds: Array<string>
+    jobs: Array<{
+      id: string
+      sessionId?: string
+      label: string
+      title?: string
+      status: "pending" | "running" | "done" | "failed"
+    }>
+  }
+}
+
+export type KilocodeFanoutResponse = KilocodeFanoutResponses[keyof KilocodeFanoutResponses]
 
 export type KilocodeBackgroundJobsData = {
   body?: never

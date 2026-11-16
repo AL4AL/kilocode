@@ -42,6 +42,7 @@ import { BasicTool, useToolApprovalLine } from "./basic-tool"
 import { BoardMessage, BoardParticipantStack, BoardRoute } from "./board-message"
 import { preview } from "./board-route"
 import { AgentAvatar, taskStatus } from "./agent-avatar"
+import { SpawnRoster } from "./spawn-roster"
 import { Accordion } from "./accordion"
 import { StickyAccordionHeader } from "./sticky-accordion-header"
 import { Card } from "./card"
@@ -2566,6 +2567,36 @@ ToolRegistry.register({
         }}
       >
         <ExaOutput output={props.output} />
+      </BasicTool>
+    )
+  },
+})
+
+ToolRegistry.register({
+  name: "spawn_script",
+  render(props) {
+    const i18n = useI18n()
+    const scriptId = () => {
+      const value = props.metadata.scriptId
+      return typeof value === "string" ? value : ""
+    }
+    const counts = () => {
+      const meta = props.metadata
+      const num = (key: string) => (typeof meta[key] === "number" ? meta[key] : 0)
+      return { pending: num("pending"), running: num("running"), done: num("done"), failed: num("failed") }
+    }
+    return (
+      <BasicTool
+        {...props}
+        icon="task"
+        trigger={{
+          title: i18n.t("ui.tool.spawn"),
+          subtitle: i18n.t("ui.tool.spawn.summary", counts()),
+        }}
+      >
+        <Show when={scriptId()}>
+          <SpawnRoster scriptId={scriptId()} {...counts()} />
+        </Show>
       </BasicTool>
     )
   },

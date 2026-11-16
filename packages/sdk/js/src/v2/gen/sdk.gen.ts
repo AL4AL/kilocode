@@ -184,6 +184,8 @@ import type {
   KilocodeCommandFilesResponses,
   KilocodeDrainSessionErrors,
   KilocodeDrainSessionResponses,
+  KilocodeFanoutErrors,
+  KilocodeFanoutResponses,
   KilocodeHeapSnapshotErrors,
   KilocodeHeapSnapshotResponses,
   KilocodeMarketplaceInstallErrors,
@@ -9027,6 +9029,42 @@ export class Kilocode extends HeyApiClient {
       ThrowOnError
     >({
       url: "/session/{sessionID}/model-usage",
+      ...options,
+      ...params,
+    })
+  }
+
+  /**
+   * List spawned children
+   *
+   * Page the children started by one spawn script.
+   */
+  public fanout<ThrowOnError extends boolean = false>(
+    parameters: {
+      directory?: string
+      workspace?: string
+      scriptID: string
+      offset?: string
+      limit?: string
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "query", key: "directory" },
+            { in: "query", key: "workspace" },
+            { in: "query", key: "scriptID" },
+            { in: "query", key: "offset" },
+            { in: "query", key: "limit" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).get<KilocodeFanoutResponses, KilocodeFanoutErrors, ThrowOnError>({
+      url: "/kilocode/fanout",
       ...options,
       ...params,
     })

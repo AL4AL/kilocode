@@ -183,6 +183,8 @@ export const dict: Record<string, string> = {
   "ui.tool.glob": "Glob",
   "ui.tool.grep": "Grep",
   "ui.tool.task": "Task",
+  "ui.tool.spawn": "Spawn", // kilocode_change
+  "ui.tool.spawn.summary": "{{running}} running · {{pending}} waiting · {{done}} done · {{failed}} failed", // kilocode_change
   "ui.tool.webfetch": "Webfetch",
   "ui.tool.websearch": "Web Search",
   "ui.tool.websearch.provider": "{{provider}} Web Search",

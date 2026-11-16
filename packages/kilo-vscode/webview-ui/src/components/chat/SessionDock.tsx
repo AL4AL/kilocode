@@ -30,6 +30,7 @@ import { showsWorking } from "../shared/working-indicator-utils"
 import { running } from "../../context/session-timing"
 import { useGoalDock } from "./goal/useGoalDock"
 import { AgentStack, useAgentStack } from "./AgentStack"
+import { SpawnStrip, useFanoutPoll } from "./SpawnStrip"
 import { SwarmBoardButton, useSwarmBoard } from "./SwarmBoard"
 import { stackFit, stackPlace, stackWidth } from "./background-agents"
 import { TodoChip, useTodoDock } from "./todo/TodoChip"
@@ -69,6 +70,7 @@ export const SessionDock: Component<SessionDockProps> = (props) => {
     )
   const actions = () => !working() && !props.blocked && (props.hasActions?.() ?? false)
   const visible = () => !props.readonly && stack.shown()
+  useFanoutPoll()
   // The stack, the board button, or both lead the spinner.
   const front = () => visible() || board.shown()
   const agents = () => !working() && !actions() && !props.blocked && (front() || todo.shown())
@@ -198,6 +200,7 @@ export const SessionDock: Component<SessionDockProps> = (props) => {
       <Show when={visible()}>
         <AgentStack state={stack} max={Math.min(max(), room())} rule={!board.shown()} />
       </Show>
+      <SpawnStrip />
       <SwarmBoardButton state={board} rule active={actions()} />
     </>
   )
@@ -309,6 +312,7 @@ export const SessionDock: Component<SessionDockProps> = (props) => {
               <Show when={visible()}>
                 <AgentStack state={stack} max={max()} rule={!board.shown()} />
               </Show>
+              <SpawnStrip />
               <SwarmBoardButton state={board} rule active={working()} />
             </div>
           </Show>
@@ -330,6 +334,7 @@ export const SessionDock: Component<SessionDockProps> = (props) => {
           <Show when={visible()}>
             <AgentStack state={stack} label />
           </Show>
+          <SpawnStrip />
           <SwarmBoardButton state={board} active={agents()} />
           {chip(false)}
         </div>

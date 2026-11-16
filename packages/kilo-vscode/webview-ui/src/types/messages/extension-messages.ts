@@ -22,8 +22,17 @@ import type { BrowserFeedbackData, BrowserReference } from "../../../../src/shar
 import type { BrowserCursor, BrowserFrame } from "../../../../src/shared/browser-stream"
 import type { CodeContext } from "../../../../src/shared/code-context"
 import type { PRMergeResult, PRReviewResult } from "../../../../src/shared/pr-comment-actions"
+import type { FanoutPage } from "../../../../src/kilo-provider/fanout-page"
 
 export type { BrowserReference } from "../../../../src/shared/browser-feedback"
+
+export interface FanoutLoadedMessage {
+  type: "fanoutLoaded"
+  requestID: string
+  sessionID?: string
+  page?: FanoutPage
+  error?: string
+}
 
 export interface BackgroundJobsLoadedMessage {
   type: "backgroundJobsLoaded"
@@ -2030,4 +2039,5 @@ export type ExtensionMessage =
   | MemoryEventMessage
   | MemoryOperationResultMessage
   | BackgroundJobsLoadedMessage
+  | FanoutLoadedMessage
   | SessionBoardLoadedMessage

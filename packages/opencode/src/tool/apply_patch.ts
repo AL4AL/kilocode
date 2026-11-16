@@ -76,7 +76,7 @@ export const ApplyPatchTool = Tool.define(
 
       for (const hunk of hunks) {
         const filePath = path.resolve(instance.directory, hunk.path)
-        assertMutablePath(filePath) // kilocode_change
+        yield* Effect.promise(() => assertMutablePath(filePath, ctx.sessionID)) // kilocode_change
         yield* assertExternalDirectoryEffect(ctx, filePath)
 
         switch (hunk.type) {
@@ -161,6 +161,7 @@ export const ApplyPatchTool = Tool.define(
             }
 
             const movePath = hunk.move_path ? path.resolve(instance.directory, hunk.move_path) : undefined
+            if (movePath) yield* Effect.promise(() => assertMutablePath(movePath, ctx.sessionID)) // kilocode_change
             yield* assertExternalDirectoryEffect(ctx, movePath)
 
             fileChanges.push({

@@ -53,6 +53,24 @@ function meta(part: ToolPart, key: string): unknown {
   return (part.state as { metadata?: Record<string, unknown> }).metadata?.[key]
 }
 
+function num(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value) ? value : 0
+}
+
+/** One header row per spawn script. The live running count replaces the tool-part snapshot. */
+export function spawnStrips(tools: ToolPart[]) {
+  const rows: { id: string; scriptId: string; running: number }[] = []
+  const seen = new Set<string>()
+  for (const part of tools) {
+    if (part.tool !== "spawn_script") continue
+    const scriptId = text(meta(part, "scriptId"))
+    if (!scriptId || seen.has(scriptId)) continue
+    seen.add(scriptId)
+    rows.push({ id: part.id, scriptId, running: num(meta(part, "running")) })
+  }
+  return rows
+}
+
 /** Child session IDs of Task tool parts. */
 export function taskChildren(tools: ToolPart[]): string[] {
   const ids: string[] = []

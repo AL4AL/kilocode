@@ -1,0 +1,32 @@
+[data-component="spawn-roster"] {
+  --spawn-row-height: 28px;
+}
+
+[data-slot="spawn-view"] {
+  overflow: auto;
+}
+
+[data-slot="spawn-roster-track"] {
+  position: relative;
+}
+
+[data-slot="spawn-row"] {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: var(--spawn-row-height);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+[data-slot="spawn-row"]:disabled {
+  cursor: default;
+  opacity: 0.85;
+}

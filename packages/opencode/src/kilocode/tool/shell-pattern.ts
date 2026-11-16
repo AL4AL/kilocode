@@ -32,7 +32,7 @@ function mask(text: string) {
 
 // A redirect is inert when it writes to or reads from /dev/null, or only
 // duplicates or closes a file descriptor.
-function inert(node: Node) {
+export function inert(node: Node) {
   const op = node.children.find((child) => child && !child.isNamed)?.type
   if (!op) return false
   if (CLOSE.has(op)) return true

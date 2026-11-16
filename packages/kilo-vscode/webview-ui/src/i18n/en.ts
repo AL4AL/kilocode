@@ -1388,6 +1388,7 @@ export const dict = {
   "task.todos.title": "To-dos",
   "task.todos.done": "All done",
 
+  "task.spawn.running": "{{count}} spawned agents running",
   "task.backgroundAgents.running.one": "1 background agent",
   "task.backgroundAgents.running.many": "{{count}} background agents",
   "task.backgroundAgents.open": "Open background agent",
