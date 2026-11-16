@@ -62,6 +62,8 @@ export type Script = {
   inbox: Report[]
   /** Index of the next report that has not been delivered to the parent. */
   cursor: number
+  /** Set when the parent session is stopped; jobs do not resume. */
+  stopped?: boolean
 }
 
 type File = {
@@ -277,6 +279,24 @@ export namespace FanoutStore {
       const script = data.scripts.find((item) => item.id === scriptID)
       if (!script) return
       if (script.cursor < script.inbox.length) script.cursor += 1
+    })
+  }
+
+  /** Stop every script owned by this parent. Returns child session ids to abort. */
+  export function stopParent(parentID: string) {
+    return change((data) => {
+      const ids: string[] = []
+      for (const script of data.scripts) {
+        if (script.parentID !== parentID || script.stopped) continue
+        script.stopped = true
+        for (const job of script.jobs) {
+          if (job.status === "done" || job.status === "failed") continue
+          if (job.sessionId) ids.push(job.sessionId)
+          job.status = "failed"
+          job.error = "Stopped"
+        }
+      }
+      return ids
     })
   }
 }

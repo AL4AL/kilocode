@@ -239,7 +239,7 @@ export const deliver = Effect.fn("Fanout.deliver")(function* (scriptID: string) 
   const prompts = yield* SessionPrompt.Service
   const status = yield* SessionStatus.Service
   const script = FanoutStore.get(scriptID)
-  if (!script) return
+  if (!script || script.stopped) return
   const report = script.inbox.at(script.cursor)
   if (!report) return
   const parent = SessionID.make(script.parentID)

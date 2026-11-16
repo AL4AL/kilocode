@@ -17,6 +17,7 @@ import { Interrupted } from "@opencode-ai/schema/kilocode/session-drain"
 import { KiloSessionMessageOrder } from "@/kilocode/session/message-order"
 import { KiloSessionPromptQueue } from "@/kilocode/session/prompt-queue"
 import { OpenRouterBatchActive } from "@/kilocode/openrouter/batch-active" // kilocode_change
+import { FanoutStore } from "@/kilocode/fanout/store" // kilocode_change
 import { KiloSessionTurn } from "@/kilocode/session/turn"
 import { Permission } from "@/permission"
 import { PermissionProvenance } from "@/kilocode/permission/provenance"
@@ -190,6 +191,22 @@ export namespace KiloSessionPrompt {
       yield* input.stop(
         input.sessionID,
         Effect.gen(function* () {
+          // kilocode_change start - stop spawned children when the parent hits Stop
+          const fanout = yield* Effect.tryPromise({
+            try: () => FanoutStore.stopParent(input.sessionID),
+            catch: (err) => err,
+          }).pipe(
+            Effect.match({
+              onFailure: () => [] as string[],
+              onSuccess: (ids) => ids,
+            }),
+          )
+          yield* Effect.forEach(
+            fanout,
+            (id) => input.stop(SessionID.make(id), cancel(SessionID.make(id))),
+            { concurrency: "unbounded", discard: true },
+          )
+          // kilocode_change end
           const children = input.scope === "session" ? [] : yield* descendants(input.sessionID)
           yield* Effect.forEach(
             [input.sessionID, ...children],

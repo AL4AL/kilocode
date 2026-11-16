@@ -40,6 +40,7 @@ function queued(script: Script, job: Job) {
 async function sweep() {
   const app = await runtime()
   for (const script of FanoutStore.list()) {
+    if (script.stopped) continue
     const running = script.jobs.filter((job) => job.status === "running").length
     const room = script.cap - running
     const pending = script.jobs.filter((job) => job.status === "pending" && !live.has(job.id))

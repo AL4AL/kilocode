@@ -108,6 +108,7 @@ export const SpawnScriptTool = Tool.define<typeof Params, Meta, never, "spawn_sc
             "This tool result only confirms enqueue. Watch the spawn_script card for live status.",
             "Each child's report is delivered here later, one per turn when you are idle. Do not poll, sleep, list dirs, or call task/spawn_script again for the same batch.",
             "Children keep running if the network drops or the editor closes.",
+            "Stop on this chat cancels pending and running spawn children for this session.",
           ].join("\n"),
         }
       }),
