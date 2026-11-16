@@ -1689,6 +1689,25 @@ export function options(input: {
   return result
 }
 
+const EFFORT_RANK = ["none", "minimal", "low", "medium", "high", "xhigh", "max"]
+
+function weakestEffort(variants: Provider.Model["variants"]) {
+  const entries = Object.entries(variants ?? {})
+  if (entries.length === 0) return
+  const ranked = entries
+    .map(([key, value]) => {
+      const effort =
+        value && typeof value === "object" && "reasoning" in value
+          ? (value.reasoning as { effort?: string } | undefined)?.effort
+          : undefined
+      const name = typeof effort === "string" ? effort : key
+      const rank = EFFORT_RANK.indexOf(name)
+      return { value, rank: rank === -1 ? EFFORT_RANK.length : rank }
+    })
+    .sort((a, b) => a.rank - b.rank)
+  return ranked[0]?.value
+}
+
 export function smallOptions(model: Provider.Model) {
   const small = Object.values(model.variants ?? {})[0] ?? {}
   if (
@@ -1701,7 +1720,11 @@ export function smallOptions(model: Provider.Model) {
     return mergeDeep(base, small)
   }
   if (model.providerID === "openrouter" || model.providerID === "llmgateway") {
-    if (Object.keys(small).length === 0 && model.api.id.includes("google")) {
+    // kilocode_change start - catalog lists the highest effort first; title calls use the weakest
+    const weakest = weakestEffort(model.variants)
+    if (weakest) return weakest
+    // kilocode_change end
+    if (model.api.id.includes("google")) {
       return { reasoning: { enabled: false } }
     }
   }

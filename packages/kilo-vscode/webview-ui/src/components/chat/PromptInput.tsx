@@ -277,7 +277,6 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
   const vscode = useVSCode()
   const projectMemory = useMemory()
   const sid = () => session.currentSessionID() ?? props.pendingSessionID ?? session.draftSessionID() ?? undefined
-  const chatAgent = () => session.selectedAgent(sid()) === "chat"
   const ctx = () => {
     const id = props.boxId
     if (!id || !id.startsWith("agent-manager:")) return undefined
@@ -2382,11 +2381,7 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
         <PromptSelectors
           agent={<ModeSwitcher sessionID={sid} blocked={props.blocked?.() ?? false} hint={modeHint()} />}
           model={<ModelSelector sessionID={sid} blocked={props.blocked?.() ?? false} />}
-          variant={
-            chatAgent() ? undefined : (
-              <ThinkingSelector sessionID={sid} blocked={props.blocked?.() ?? false} />
-            )
-          }
+          variant={<ThinkingSelector sessionID={sid} blocked={props.blocked?.() ?? false} />}
         />
         <div class="prompt-input-hint-actions">
           <div class="prompt-action" data-folded={hidden().length === 0 ? "" : undefined}>

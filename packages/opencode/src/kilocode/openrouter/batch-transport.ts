@@ -58,9 +58,11 @@ function completionBody(input: BatchStreamInput) {
     function: { name, description: tool.description, parameters: tool.inputSchema ?? { type: "object" } },
   }))
   if (tools.length > 0) body.tools = tools
-  if (input.prepared.params.options && Object.keys(input.prepared.params.options).length > 0) {
-    body.provider_options = input.prepared.params.options
-  }
+  const options = { ...(input.prepared.params.options ?? {}) }
+  const reasoning = options.reasoning
+  delete options.reasoning
+  if (reasoning && typeof reasoning === "object") body.reasoning = reasoning
+  if (Object.keys(options).length > 0) body.provider_options = options
   return body
 }
 

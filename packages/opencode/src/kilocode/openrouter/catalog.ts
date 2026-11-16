@@ -28,6 +28,10 @@ export type OpenRouterRow = {
     max_completion_tokens?: number
   }
   supported_parameters?: string[]
+  reasoning?: {
+    supported_efforts?: Array<string | null> | null
+    mandatory?: boolean
+  }
 }
 
 export type OpenRouterList = {
@@ -37,6 +41,23 @@ export type OpenRouterList = {
 }
 
 const BLOCKED_OUTPUT = new Set(["embeddings", "rerank", "decisions", "speech", "transcription"])
+const GATEWAY_EFFORTS = ["max", "xhigh", "high", "medium", "low", "minimal", "none"]
+
+type EffortOption = { type: "effort"; values: string[] }
+
+function effortValues(row: OpenRouterRow) {
+  const spec = row.reasoning
+  if (!spec || spec.supported_efforts === undefined) return []
+  const raw = spec.supported_efforts === null ? GATEWAY_EFFORTS : spec.supported_efforts
+  const values = raw.filter((item): item is string => typeof item === "string" && item.length > 0)
+  if (spec.mandatory) return values.filter((item) => item !== "none")
+  return values
+}
+
+function effortOptions(values: string[]): EffortOption[] {
+  if (values.length === 0) return []
+  return [{ type: "effort", values }]
+}
 
 export function catalogQuery(offset = 0) {
   const params = new URLSearchParams({
@@ -150,6 +171,7 @@ export function batchCapable(row: OpenRouterRow, twins?: Set<string>) {
 export function toCatalogModel(row: OpenRouterRow, twins?: Set<string>): Provider["models"][string] {
   const mods = modalities(row)
   const params = row.supported_parameters ?? []
+  const efforts = effortValues(row)
   const batch = batchCapable(row, twins)
   const name = batch && row.id.endsWith(":batch") ? row.name : batch ? `${row.name}` : row.name
   return {
@@ -158,7 +180,8 @@ export function toCatalogModel(row: OpenRouterRow, twins?: Set<string>): Provide
     family: row.id.split("/")[0] ?? "",
     release_date: "",
     attachment: mods.input.includes("image") || mods.input.includes("pdf"),
-    reasoning: params.includes("reasoning") || params.includes("include_reasoning"),
+    reasoning: efforts.length > 0 || params.includes("reasoning") || params.includes("include_reasoning"),
+    reasoning_options: effortOptions(efforts),
     temperature: params.includes("temperature"),
     tool_call: true,
     batch,
@@ -186,5 +209,30 @@ export function fromList(json: OpenRouterList): Provider["models"] {
     if (!keepsBatchTwin(row) || models[row.id]) continue
     models[row.id] = toCatalogModel(row, twins)
   }
+  copyBatchEfforts(models, rows)
   return models
+}
+
+function effortList(model: Provider["models"][string]) {
+  const options = (model as { reasoning_options?: EffortOption[] }).reasoning_options ?? []
+  const effort = options.find((item) => item.type === "effort")
+  return effort?.values ?? []
+}
+
+function copyBatchEfforts(models: Record<string, Provider["models"][string]>, rows: OpenRouterRow[]) {
+  const suffix = ":batch"
+  const byId = new Map(rows.map((row) => [row.id, row]))
+  for (const [id, model] of Object.entries(models)) {
+    if (!id.endsWith(suffix) || effortList(model).length > 0) continue
+    const row = byId.get(id)
+    if (row?.reasoning) continue
+    const base = models[id.slice(0, -suffix.length)]
+    const values = base ? effortList(base) : []
+    if (values.length === 0) continue
+    models[id] = {
+      ...model,
+      reasoning: true,
+      reasoning_options: effortOptions(values),
+    } as Provider["models"][string]
+  }
 }

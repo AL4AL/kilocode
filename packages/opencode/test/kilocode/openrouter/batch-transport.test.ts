@@ -57,6 +57,50 @@ describe("batch transport stream", () => {
     expect(body?.max_tokens).toBe(1024)
   })
 
+  test("sends the selected reasoning effort on the batch body", async () => {
+    process.env.KILO_OPENROUTER_BATCH_POLL_MS = "1"
+    const mock = createBatchFetch({
+      statuses: [
+        {
+          status: "completed",
+          results: [
+            {
+              custom_id: "kilo-user-1",
+              response: {
+                status_code: 200,
+                body: { choices: [{ finish_reason: "stop", message: { content: "ok" } }] },
+              },
+            },
+          ],
+        },
+      ],
+    })
+
+    const stream = OpenRouterBatchTransport.stream({
+      sessionID: "ses_test" as never,
+      userMessageID: "user-1" as never,
+      model,
+      auth: { type: "api", key: "sk-test" },
+      prepared: {
+        system: [],
+        messages: [{ role: "user", content: "hi" }],
+        tools: {},
+        params: { maxOutputTokens: 1024, options: { reasoning: { effort: "high" }, temperature: 0 } },
+        messageTransformOptions: {},
+        headers: {},
+      },
+      abort: new AbortController().signal,
+      fetch: mock.fetch,
+    })
+
+    await Effect.runPromise(Stream.runCollect(stream))
+    const body = (
+      mock.posts[0] as { requests?: Array<{ body?: { reasoning?: { effort?: string }; provider_options?: unknown } }> }
+    ).requests?.[0]?.body
+    expect(body?.reasoning).toEqual({ effort: "high" })
+    expect(body?.provider_options).toEqual({ temperature: 0 })
+  })
+
   test("HL-7 follow-up step issues a second batch POST", async () => {
     process.env.KILO_OPENROUTER_BATCH_POLL_MS = "1"
     process.env.OPENROUTER_API_KEY = "sk-test"

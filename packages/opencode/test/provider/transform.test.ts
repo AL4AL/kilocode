@@ -6233,6 +6233,23 @@ test("ProviderTransform.smallOptions preserves the weakest OpenRouter reasoning 
   ).toEqual({ reasoning: { effort: "low" } })
 })
 
+test("ProviderTransform.smallOptions ignores OpenRouter's highest-first effort order", () => {
+  expect(
+    ProviderTransform.smallOptions({
+      providerID: "openrouter",
+      api: {
+        id: "google/gemini-4-carbon",
+        npm: "@openrouter/ai-sdk-provider",
+      },
+      variants: {
+        high: { reasoning: { effort: "high" } },
+        medium: { reasoning: { effort: "medium" } },
+        low: { reasoning: { effort: "low" } },
+      },
+    } as any),
+  ).toEqual({ reasoning: { effort: "low" } })
+})
+
 describe("ProviderTransform.smallOptions - google thinking controls", () => {
   const createGoogleModel = (apiId: string) => {
     const model = {
