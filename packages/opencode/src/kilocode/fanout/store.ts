@@ -2,6 +2,9 @@ import { mkdirSync, readFileSync, renameSync, writeFileSync } from "fs"
 import path from "path"
 import { Global } from "@opencode-ai/core/global"
 import * as Log from "@opencode-ai/core/util/log"
+import { inboxQueued, type ReportMode } from "./report"
+
+export type { ReportMode } from "./report"
 
 const log = Log.create({ service: "fanout-store" })
 
@@ -56,12 +59,16 @@ export type Script = {
   messageID?: string
   callID?: string
   partID?: string
+  /** How child results are delivered to the parent model. */
+  report?: ReportMode
   /** Last counts written onto the parent tool part. */
   published?: string
   jobs: Job[]
   inbox: Report[]
   /** Index of the next report that has not been delivered to the parent. */
   cursor: number
+  /** Rollup mode: parent already received the combined summary. */
+  rollupSent?: boolean
   /** Set when the parent session is stopped; jobs do not resume. */
   stopped?: boolean
 }
@@ -157,6 +164,8 @@ export namespace FanoutStore {
       scriptId: script.id,
       total: script.jobs.length,
       ...countsOf(script),
+      inboxQueued: inboxQueued(script),
+      report: script.report ?? "each",
       offset: start,
       sessionIds: script.jobs.flatMap((job) => (job.sessionId ? [job.sessionId] : [])),
       jobs: script.jobs.slice(start, start + size).map((job) => ({
@@ -195,7 +204,19 @@ export namespace FanoutStore {
     })
   }
 
-  export function patchScript(id: string, patch: Partial<Pick<Script, "partID" | "published">>) {
+  export function finishRollup(id: string) {
+    return change((data) => {
+      const script = data.scripts.find((item) => item.id === id)
+      if (!script) return
+      script.cursor = script.inbox.length
+      script.rollupSent = true
+    })
+  }
+
+  export function patchScript(
+    id: string,
+    patch: Partial<Pick<Script, "partID" | "published" | "report" | "rollupSent">>,
+  ) {
     return change((data) => {
       const script = data.scripts.find((item) => item.id === id)
       if (!script) return

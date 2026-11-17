@@ -185,6 +185,12 @@ export const dict: Record<string, string> = {
   "ui.tool.task": "Task",
   "ui.tool.spawn": "Spawn", // kilocode_change
   "ui.tool.spawn.summary": "{{running}} running · {{pending}} waiting · {{done}} done · {{failed}} failed", // kilocode_change
+  "ui.tool.spawn.queued": "{{count}} reports queued", // kilocode_change
+  "ui.tool.spawn.report.each": "reports one-by-one", // kilocode_change
+  "ui.tool.spawn.report.rollup": "rollup when done", // kilocode_change
+  "ui.tool.spawn.report.none": "card only", // kilocode_change
+  "ui.tool.spawn.inbox": "{{count}} report(s) queued for parent", // kilocode_change
+  "ui.tool.spawn.rollup": "rollup summary pending", // kilocode_change
   "ui.tool.webfetch": "Webfetch",
   "ui.tool.websearch": "Web Search",
   "ui.tool.websearch.provider": "{{provider}} Web Search",

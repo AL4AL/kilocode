@@ -3,11 +3,13 @@ import { Tool } from "@/tool/tool"
 import { InstanceState } from "@/effect/instance-state"
 import DESCRIPTION from "./spawn-script.txt"
 import { FanoutStore } from "@/kilocode/fanout/store"
+import type { ReportMode } from "@/kilocode/fanout/report"
 import { runScript } from "@/kilocode/fanout/script"
 import { armFanoutResume } from "@/kilocode/fanout/resume"
 
 const DEFAULT_CAP = 4
 const MAX_CAP = 64
+const ROLLUP_AT = 10
 
 const Params = Schema.Struct({
   script: Schema.String.annotate({
@@ -20,6 +22,10 @@ const Params = Schema.Struct({
   isolate: Schema.optional(Schema.Boolean).annotate({
     description: "Give every child its own git worktree. A spawn() call can still set isolate for one child.",
   }),
+  report: Schema.optional(Schema.Literals(["each", "rollup", "none"])).annotate({
+    description:
+      "How child results return to this chat: each (one synthetic message per child), rollup (one summary when all finish; default when >10 children), or none (roster only).",
+  }),
 })
 
 type Meta = {
@@ -28,11 +34,18 @@ type Meta = {
   running: number
   done: number
   failed: number
+  inboxQueued?: number
+  report?: ReportMode
 }
 
 function cap(value: number | undefined) {
   if (value == null || !Number.isFinite(value)) return DEFAULT_CAP
   return Math.min(MAX_CAP, Math.max(1, Math.floor(value)))
+}
+
+function reportMode(total: number, value: ReportMode | undefined): ReportMode {
+  if (value) return value
+  return total > ROLLUP_AT ? "rollup" : "each"
 }
 
 export const SpawnScriptTool = Tool.define<typeof Params, Meta, never, "spawn_script">(
@@ -84,6 +97,9 @@ export const SpawnScriptTool = Tool.define<typeof Params, Meta, never, "spawn_sc
           }),
         )
         const counts = FanoutStore.counts(id)
+        const total = counts.pending + counts.running + counts.done + counts.failed
+        const mode = reportMode(total, params.report)
+        yield* Effect.promise(() => FanoutStore.patchScript(id, { report: mode }))
         if (ran) {
           return {
             title: "Spawn script failed",
@@ -91,22 +107,30 @@ export const SpawnScriptTool = Tool.define<typeof Params, Meta, never, "spawn_sc
             output: ran.message,
           }
         }
-        const total = counts.pending + counts.running + counts.done + counts.failed
         const title = total === 1 ? "Queued 1 child" : `Queued ${total} children`
+        const meta: Meta = { scriptId: id, ...counts, report: mode, inboxQueued: 0 }
         yield* ctx.metadata({
           title,
-          metadata: { scriptId: id, ...counts },
+          metadata: meta,
         })
+        const reportLine =
+          mode === "none"
+            ? "Report mode none: results stay on the spawn card only."
+            : mode === "rollup"
+              ? "Report mode rollup: one combined summary arrives when every child has finished (when you are idle)."
+              : "Report mode each: one synthetic message per child, queued one per idle turn."
         return {
           title,
-          metadata: { scriptId: id, ...counts },
+          metadata: meta,
           output: [
             `${title} (script ${id}).`,
             `Counts: ${counts.pending} pending, ${counts.running} running, ${counts.done} done, ${counts.failed} failed.`,
+            reportLine,
             `Up to ${limit} children run at once.`,
             "Children use this workspace unless you set isolate. Each is a full agent (write, bash, etc.).",
-            "This tool result only confirms enqueue. Watch the spawn_script card for live status.",
-            "Each child's report is delivered here later, one per turn when you are idle. Do not poll, sleep, list dirs, or call task/spawn_script again for the same batch.",
+            "This tool result only confirms enqueue. Watch the spawn_script card for live status and queued reports.",
+            "Each child must end with: FANOUT_RESULT ok <summary> or FANOUT_RESULT fail <reason>.",
+            "Do not poll, sleep, list dirs, or call task/spawn_script again for the same batch.",
             "Children keep running if the network drops or the editor closes.",
             "Stop on this chat cancels pending and running spawn children for this session.",
           ].join("\n"),

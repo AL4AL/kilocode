@@ -21,12 +21,24 @@ spawn({ prompt, label, paths, isolate })
 
 Optional `cap` (default 4, max 64) is how many children run at once. Extra `spawn()` calls stay pending until a slot frees.
 
+## report
+
+Optional `report` controls how results return to this chat:
+
+- **each** — one synthetic user message per child when you are idle (queued one at a time).
+- **rollup** — one combined summary when every child has finished (default when you queue more than 10 children).
+- **none** — no synthetic messages; use the spawn card roster only.
+
+Children must end their last assistant message with exactly one line:
+
+`FANOUT_RESULT ok <what you did>` or `FANOUT_RESULT fail <why>`.
+
 ## What happens after you call this tool
 
 1. This tool returns immediately after the script finishes enqueueing. It does **not** wait for children to finish.
 2. Children are real sessions under this chat. They run in **this workspace directory** unless `isolate` / worktree applies.
-3. Progress appears on the **spawn_script** card in the transcript (counts + child list). Do not poll the filesystem or relaunch the same batch.
-4. Each child's final report is delivered to **you** as a synthetic user message, **one at a time**, when you are idle. Further reports wait in queue. Do not use `task` or a second `spawn_script` to "check" the same work.
+3. Progress appears on the **spawn_script** card in the transcript (counts, queued reports, child list). Do not poll the filesystem or relaunch the same batch.
+4. Delivered reports depend on `report` mode (see above). Do not use `task` or a second `spawn_script` to "check" the same work.
 5. Children keep running through network loss or a closed editor; jobs resume when `kilo serve` restarts.
 6. **Stop** on the parent chat cancels every pending or running child from this parent's spawn scripts (including in-flight OpenRouter batch work on those children). Already-finished reports may still be in the inbox until delivered.
 
@@ -36,13 +48,13 @@ Use disjoint paths or one file name per child in the prompt:
 
 for (let i = 0; i < 100; i++) {
   const name = `fanout-${i}-${Math.random().toString(36).slice(2, 8)}.txt`;
-  spawn(`Create a file named ${name} in the workspace root using the write tool. Put one line of text inside. Reply with the path you wrote.`, {
+  spawn(`Create a file named ${name} in the workspace root using the write tool. Put one line of text inside. End with FANOUT_RESULT ok and the path.`, {
     label: `file-${i}`,
     paths: [name],
   });
 }
 
-Raise `cap` when you enqueue many children (e.g. `cap: 16`).
+Raise `cap` when you enqueue many children (e.g. `cap: 16`). Large batches default to `report: rollup`.
 
 ## When not to use this
 

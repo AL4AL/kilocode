@@ -83,6 +83,8 @@ export const FanoutPage = Schema.Struct({
   running: Schema.Number,
   done: Schema.Number,
   failed: Schema.Number,
+  inboxQueued: Schema.optional(Schema.Number),
+  report: Schema.optional(Schema.Literals(["each", "rollup", "none"])),
   offset: Schema.Number,
   sessionIds: Schema.Array(Schema.String),
   jobs: Schema.Array(FanoutJob),

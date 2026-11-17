@@ -21,13 +21,18 @@ import { Worktree } from "@/worktree"
 import { errorMessage } from "@/util/error"
 import * as Log from "@opencode-ai/core/util/log"
 import { FanoutStore, MAX_JOB_ATTEMPTS, type Job, type Script } from "./store"
+import { allSettled, buildRollup, extractResult, inboxQueued, reportBody } from "./report"
 
 const log = Log.create({ service: "fanout" })
 const CHILD = "general"
-const REPORT_CHARS = 8_000
-
 function body(job: Job) {
-  const lines = [job.prompt]
+  const lines = [
+    job.prompt,
+    "",
+    "When you are finished, end your last message with exactly one line:",
+    "FANOUT_RESULT ok <what you did>",
+    "or FANOUT_RESULT fail <why> if you could not finish.",
+  ]
   if (job.paths.length > 0) lines.push("", "Only change these paths:", ...job.paths.map((item) => `- ${item}`))
   if (job.directory) lines.push("", `Work only inside ${job.directory}.`)
   return lines.join("\n")
@@ -39,7 +44,9 @@ function reply(messages: SessionV1.WithParts[]) {
   const part = last.parts.findLast(
     (item) => item.type === "text" && !item.synthetic && !item.ignored && item.text.trim().length > 0,
   )
-  return part?.type === "text" ? part.text : ""
+  if (part?.type !== "text") return ""
+  const parsed = extractResult(part.text)
+  return parsed || part.text
 }
 
 function unfinished(messages: SessionV1.WithParts[]) {
@@ -65,16 +72,18 @@ const climb = (sessions: Session.Interface, id: SessionID, n: number): Effect.Ef
   })
 
 function report(script: Script, job: Job, status: "done" | "failed", text: string) {
+  const mode = script.report ?? "each"
+  if (mode === "none" || mode === "rollup") return Promise.resolve()
   const id = crypto.randomUUID()
-  const clipped = text.slice(0, REPORT_CHARS)
+  const body = reportBody({ ...job, status: status === "done" ? "done" : "failed" }, text)
   return FanoutStore.pushReport(script.id, {
     id,
     jobID: job.id,
     sessionId: job.sessionId,
     status,
-    text: `${clipped}\n\nfanout-report:${id}`,
+    text: `${body}\n\nfanout-report:${id}`,
     at: Date.now(),
-  })
+  }).then(() => undefined)
 }
 
 export const launch = Effect.fn("Fanout.launch")(function* (input: { scriptID: string; jobID: string }) {
@@ -240,34 +249,46 @@ export const deliver = Effect.fn("Fanout.deliver")(function* (scriptID: string) 
   const status = yield* SessionStatus.Service
   const script = FanoutStore.get(scriptID)
   if (!script || script.stopped) return
-  const report = script.inbox.at(script.cursor)
-  if (!report) return
+  const mode = script.report ?? "each"
+  if (mode === "none") return
   const parent = SessionID.make(script.parentID)
   const current = yield* status.get(parent)
   if (current.type !== "idle") return
   if (OpenRouterBatchStore.bySession(parent).length > 0) return
+  const session = yield* sessions.get(parent)
+  const prompt = (text: string) =>
+    prompts.prompt({
+      sessionID: parent,
+      agent: session.agent ?? script.agent,
+      model: session.model
+        ? { providerID: session.model.providerID, modelID: session.model.id }
+        : undefined,
+      variant: session.model?.variant,
+      parts: [{ type: "text", synthetic: true, text }],
+    })
+
+  if (mode === "rollup") {
+    if (script.rollupSent || !allSettled(script)) return
+    const text = buildRollup(script)
+    const messages = yield* sessions.messages({ sessionID: parent })
+    if (messages.some((msg) => msg.parts.some((part) => part.type === "text" && part.text.includes(`rollup-${script.id}`)))) {
+      yield* Effect.promise(() => FanoutStore.finishRollup(script.id))
+      return
+    }
+    yield* prompt(text)
+    yield* Effect.promise(() => FanoutStore.finishRollup(script.id))
+    return
+  }
+
+  const item = script.inbox.at(script.cursor)
+  if (!item) return
   const messages = yield* sessions.messages({ sessionID: parent })
-  const seen = messages.some((msg) => msg.parts.some((part) => part.type === "text" && part.text.includes(report.id)))
+  const seen = messages.some((msg) => msg.parts.some((part) => part.type === "text" && part.text.includes(item.id)))
   if (seen) {
     yield* Effect.promise(() => FanoutStore.ack(script.id))
     return
   }
-  const session = yield* sessions.get(parent)
-  yield* prompts.prompt({
-    sessionID: parent,
-    agent: session.agent ?? script.agent,
-    model: session.model
-      ? { providerID: session.model.providerID, modelID: session.model.id }
-      : undefined,
-    variant: session.model?.variant,
-    parts: [
-      {
-        type: "text",
-        synthetic: true,
-        text: report.text,
-      },
-    ],
-  })
+  yield* prompt(item.text)
   yield* Effect.promise(() => FanoutStore.ack(script.id))
 })
 
@@ -301,7 +322,8 @@ export const publish = Effect.fn("Fanout.publish")(function* (scriptID: string) 
   const script = FanoutStore.get(scriptID)
   if (!script?.messageID || !script.callID) return
   const counts = FanoutStore.counts(scriptID)
-  const key = `${counts.pending}:${counts.running}:${counts.done}:${counts.failed}`
+  const queued = inboxQueued(script)
+  const key = `${counts.pending}:${counts.running}:${counts.done}:${counts.failed}:${queued}:${script.report ?? "each"}`
   if (script.published === key) return
   const messages = yield* sessions.messages({ sessionID: SessionID.make(script.parentID) })
   const message = messages.find((item) => item.info.id === script.messageID)
@@ -318,6 +340,8 @@ export const publish = Effect.fn("Fanout.publish")(function* (scriptID: string) 
         running: counts.running,
         done: counts.done,
         failed: counts.failed,
+        inboxQueued: queued,
+        report: script.report ?? "each",
       },
     },
   })

@@ -2585,13 +2585,27 @@ ToolRegistry.register({
       const num = (key: string) => (typeof meta[key] === "number" ? meta[key] : 0)
       return { pending: num("pending"), running: num("running"), done: num("done"), failed: num("failed") }
     }
+    const subtitle = () => {
+      const meta = props.metadata
+      const base = i18n.t("ui.tool.spawn.summary", counts())
+      const queued = typeof meta.inboxQueued === "number" ? meta.inboxQueued : 0
+      const report = typeof meta.report === "string" ? meta.report : "each"
+      const tag =
+        report === "rollup"
+          ? i18n.t("ui.tool.spawn.report.rollup")
+          : report === "none"
+            ? i18n.t("ui.tool.spawn.report.none")
+            : i18n.t("ui.tool.spawn.report.each")
+      const tail = report === "each" && queued > 0 ? ` · ${i18n.t("ui.tool.spawn.inbox", { count: String(queued) })}` : ""
+      return `${base} · ${tag}${tail}`
+    }
     return (
       <BasicTool
         {...props}
         icon="task"
         trigger={{
           title: i18n.t("ui.tool.spawn"),
-          subtitle: i18n.t("ui.tool.spawn.summary", counts()),
+          subtitle: subtitle(),
         }}
       >
         <Show when={scriptId()}>

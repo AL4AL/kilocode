@@ -93,6 +93,8 @@ export type FanoutPage = {
   running: number
   done: number
   failed: number
+  inboxQueued?: number
+  report?: "each" | "rollup" | "none"
   offset: number
   sessionIds: string[]
   jobs: FanoutJob[]
