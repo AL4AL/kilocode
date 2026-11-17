@@ -132,7 +132,15 @@ Or: `bun packages/opencode/script/kilocode/bubblewrap.ts --arch x64 --output /tm
 | Extension id | `al4al.kilo-code-surge` |
 | Publisher / name | `al4al` / `kilo-code-surge` |
 | Commands / settings prefix | `kilo-code-surge.*` |
-| Version | Bump `version` in this `package.json` before each dogfood VSIX (e.g. `7.8.29-surge.1`). Upstream `7.8.x` alone is not enough for Surge installs to upgrade in place. |
+| Version | Surge dogfood semver in this `package.json`: `<upstream Kilo>-surge.<N>` (e.g. `7.8.29-surge.14`). `<upstream>` tracks the Kilo release you merged; `<N>` is **your** counter — bump it before each dogfood VSIX. Upstream `7.8.x` alone is not enough for Surge installs to upgrade in place. |
+
+**Do not confuse Surge version with `snapshot:*` labels.** `bun run snapshot:build` / `snapshot:install` (`script/dev-snapshot.ts`) sets the VSIX version to:
+
+```text
+<package.json version>-snapshot+<short-git-sha>.<git-user>
+```
+
+Example installed label: `7.8.29-surge.13-snapshot+c2fe08ca50.sajjad` — here `7.8.29-surge.13` is the real Surge product version; `-snapshot+…` only marks a local snapshot (commit + builder). VSIX files land as `$TMPDIR/kilo-vscode-snapshots/kilo-vscode-snapshot-<sha>-<user>.vsix`. Agents must **not** rename versions ad hoc or skip bumping `surge.<N>` when the user asks to install dogfood; increment `version` in `package.json`, then run `snapshot:install` (or `snapshot:build`).
 
 From `packages/kilo-vscode/`:
 
