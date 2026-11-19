@@ -51,14 +51,28 @@ function parseBody(raw: unknown): ChatCompletion | undefined {
   return undefined
 }
 
+function bodyError(body: ChatCompletion | undefined): string | undefined {
+  if (body == null || typeof body !== "object") return undefined
+  const raw = (body as { error?: { message?: string; code?: string } }).error
+  if (typeof raw?.message === "string" && raw.message.length > 0) return raw.message
+  return undefined
+}
+
 export function fromResult(item: BatchResultItem | undefined): LLMEvent[] {
-  const status = item?.response?.status_code
+  if (item == null) throw new Error("Batch completed without result item")
+  if (item.error?.message) throw new Error(item.error.message)
+  const status = item.response?.status_code
   if (status != null && status >= 400) {
-    const err = item?.error?.message ?? `Batch item failed (${status})`
-    throw new Error(err)
+    throw new Error(`Batch item failed (${status})`)
   }
-  const body = parseBody(item?.response?.body)
-  if (!body?.choices?.length) throw new Error("Batch completed without chat completion body")
+  const body = parseBody(item.response?.body)
+  if (!body?.choices?.length) {
+    const upstream = bodyError(body)
+    throw new Error(
+      upstream ??
+        "Batch completed without chat completion body (OpenRouter job finished; upstream provider returned no completion)",
+    )
+  }
 
   const choice = body.choices[0]!
   const message = choice.message ?? {}

@@ -248,9 +248,14 @@ export function transcriptRows(
       rows.push({ ...meta, type: "diff", key: `${turn.id}:diff`, message: turn.user, diffs: changes })
     }
 
-    const failed = turn.assistant.find(
-      (msg) => terminal(msg) && msg.error && msg.error.name !== "MessageAbortedError" && opts.hidden?.(msg.id) !== true,
-    )
+    const scoped = turn.assistant.filter(terminal)
+    const succeeded = scoped.some((msg) => !msg.error && msg.finish != null)
+    const failed = succeeded
+      ? undefined
+      : scoped.find(
+          (msg) =>
+            msg.error && msg.error.name !== "MessageAbortedError" && opts.hidden?.(msg.id) !== true,
+        )
     if (failed?.error) {
       rows.push({ ...meta, type: "error", key: `${turn.id}:error:${failed.id}`, message: failed, error: failed.error })
     }

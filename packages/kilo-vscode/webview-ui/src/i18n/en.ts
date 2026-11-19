@@ -207,6 +207,7 @@ export const dict = {
   "prompt.shortcutHint.mode": "Next mode",
   "prompt.action.send": "Send",
   "prompt.action.continue": "Continue",
+  "prompt.action.retryTurn": "Continue turn",
   "prompt.action.send.blocked": "Answer or dismiss the pending question first",
   "prompt.action.send.recording": "Transcribe and send",
   "prompt.action.stop": "Stop",

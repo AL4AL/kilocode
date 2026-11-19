@@ -156,6 +156,14 @@ describe("transcriptRows", () => {
     expect(rows).toEqual([])
   })
 
+  it("hides batch errors superseded by a later successful assistant on the same turn", () => {
+    const u1 = user("u1")
+    const a1 = assistant("a1", "u1", { error: { name: "ProviderError", data: { message: "batch failed" } } })
+    const a2 = assistant("a2", "u1", { finish: "tool-calls" })
+    const rows = transcriptRows(messageTurns([u1, a1, a2]), lookup({ a1: [], a2: [tool("t1", "a2")] }))
+    expect(rows.some((row) => row.type === "error")).toBe(false)
+  })
+
   it("places only the first visible non-abort error after diffs", () => {
     const u1 = user("u1", { summary: { diffs: [{ file: "a.ts" }] } })
     const a1 = assistant("a1", "u1", { error: { name: "MessageAbortedError" } })

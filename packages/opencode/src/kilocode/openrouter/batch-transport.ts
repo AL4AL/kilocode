@@ -13,6 +13,7 @@ import { fromResult } from "./batch-completion"
 import { OpenRouterBatchActive } from "./batch-active"
 import { OpenRouterBatchStore } from "./batch-store"
 import { setWaitingBatch, clearWaitingBatch } from "./batch-status"
+import { normalizeBatchMessages } from "./batch-messages"
 
 type KeyProvider = { key?: string; options?: Record<string, unknown> }
 
@@ -45,8 +46,13 @@ function completionBody(input: BatchStreamInput) {
     options: input.prepared.params.options,
     maxOutputTokens: input.prepared.params.maxOutputTokens,
   })
+  const wire = ProviderTransform.message(
+    input.prepared.messages as ModelMessage[],
+    input.model,
+    input.prepared.messageTransformOptions ?? {},
+  )
   const body: Record<string, unknown> = {
-    messages: input.prepared.messages as ModelMessage[],
+    messages: normalizeBatchMessages(wire),
     model: input.model.api.id.replace(/-batch$/, "").replace(/:batch$/, ""),
   }
   if (input.prepared.params.temperature != null) body.temperature = input.prepared.params.temperature
@@ -91,6 +97,7 @@ async function* runPoll(input: BatchStreamInput, tokenValue: string) {
   let batchId = saved?.batchId
   try {
     if (!batchId) {
+      const payloadBody = completionBody(input)
       const created = await create({
         token: tokenValue,
         fetch: input.fetch,
@@ -98,7 +105,7 @@ async function* runPoll(input: BatchStreamInput, tokenValue: string) {
           endpoint: "/v1/chat/completions",
           model: apiModel,
           customId,
-          body: completionBody(input),
+          body: payloadBody,
         },
       })
       batchId = created.id
@@ -134,19 +141,24 @@ async function* runPoll(input: BatchStreamInput, tokenValue: string) {
       fetch: input.fetch,
     })
     if (final.status !== "completed") {
+      const fail = batchFailureMessage(final)
       OpenRouterBatchStore.clear(customId)
       OpenRouterBatchActive.clear(input.sessionID)
       clearWaitingBatch(input.sessionID)
-      throw new Error(batchFailureMessage(final))
+      throw new Error(fail)
     }
-    OpenRouterBatchStore.clear(customId)
     OpenRouterBatchActive.clear(input.sessionID)
-    clearWaitingBatch(input.sessionID)
     const item = final.results?.find((r) => r.custom_id === customId) ?? final.results?.[0]
     const events = fromResult(item)
     for (const event of events) yield event
+    OpenRouterBatchStore.clear(customId)
+    clearWaitingBatch(input.sessionID)
   } catch (err) {
-    if (!merged.signal.aborted) OpenRouterBatchActive.clear(input.sessionID)
+    if (!merged.signal.aborted) {
+      OpenRouterBatchStore.clear(customId)
+      OpenRouterBatchActive.clear(input.sessionID)
+      clearWaitingBatch(input.sessionID)
+    }
     throw err
   } finally {
     ctrl.abort()

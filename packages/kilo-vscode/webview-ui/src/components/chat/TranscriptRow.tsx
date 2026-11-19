@@ -154,7 +154,13 @@ export const TranscriptRowView: Component<TranscriptRowViewProps> = (props) => {
       </Show>
 
       <Show when={props.row.type === "error" ? props.row : undefined}>
-        {(row) => <ErrorDisplay error={row().error as ErrorDisplayProps["error"]} onLogin={server.goToLogin} />}
+        {(row) => (
+          <ErrorDisplay
+            error={row().error as ErrorDisplayProps["error"]}
+            resumeMessageID={row().message.id}
+            onLogin={server.goToLogin}
+          />
+        )}
       </Show>
     </div>
   )

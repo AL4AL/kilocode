@@ -48,7 +48,7 @@ export interface SessionContextValue {
   busyTiming: Accessor<Timing | undefined>
   submitting: Accessor<boolean>
   canResume: Accessor<boolean>
-  resume: () => void
+  resume: (messageID?: string) => void
   isSubmitting: (id: string) => boolean
   loading: Accessor<boolean>
   loadingOlderMessages: Accessor<boolean>

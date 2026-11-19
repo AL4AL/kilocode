@@ -1,4 +1,5 @@
 import type { Message, Part } from "../types/messages"
+import { batchRetryable } from "../utils/batch-retry"
 
 export function continuation(input: {
   id?: string
@@ -38,7 +39,11 @@ export function continuation(input: {
       )
   )
     return
+  return resumeID(assistant)
+}
+
+function resumeID(assistant: Message) {
   if (assistant.error?.name === "MessageAbortedError") return assistant.id
-  if (assistant.error) return
+  if (assistant.error) return batchRetryable(assistant.error) ? assistant.id : undefined
   if (!assistant.finish || assistant.finish === "tool-calls") return assistant.id
 }

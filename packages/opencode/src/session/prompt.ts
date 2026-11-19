@@ -1573,7 +1573,7 @@ export const layer = Layer.effect(
         const { user: lastUser, assistant: lastAssistant, finished: lastFinished, tasks } = latest
         // kilocode_change end
 
-        if (input.resume && step === 0 && KiloSessionContinuation.target(msgs) !== input.resume) break // kilocode_change
+        if (input.resume && step === 0 && !KiloSessionContinuation.resumable(msgs, input.resume)) break // kilocode_change
         if (!lastUser) throw new Error("No user message found in stream. This should never happen.")
 
         const lastAssistantMsg = msgs.findLast(

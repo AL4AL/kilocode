@@ -34,6 +34,13 @@ const model = {
   cost: { input: 0, output: 0, cache: { read: 0, write: 0 } },
 } as Provider.Model
 
+const catalog = {
+  ...model,
+  id: ModelV2.ID.make("anthropic/claude-fable-5.2:batch"),
+  api: { id: "anthropic/claude-fable-5.2:batch", npm: "@openrouter/ai-sdk-provider" },
+  cost: { input: 25, output: 75, cache: { read: 0, write: 0 } },
+} as Provider.Model
+
 const root = LayerNode.group([
   Session.node,
   SessionProjector.node,
@@ -114,7 +121,164 @@ describe("batch backfill", () => {
         expect(text?.type === "text" && text.text).toBe("resumed hello")
         const info = row?.info
         expect(info?.role === "assistant" && info.time.completed).toBeDefined()
+        expect(info?.role === "assistant" && info.cost).toBe(0.0001)
         expect(OpenRouterBatchStore.byCustom(`kilo-${user.id}`)).toBeUndefined()
+      }),
+    ),
+  )
+
+  it.effect("uses openrouter usage.cost instead of catalog pricing", () =>
+    provideTmpdirProject((dir) =>
+      Effect.gen(function* () {
+        const sessions = yield* Session.Service
+        const chat = yield* sessions.create({ title: "batch cost" })
+        const user = yield* sessions.updateMessage({
+          id: MessageID.make("msg_user_cost"),
+          role: "user",
+          sessionID: chat.id,
+          agent: "chat",
+          model: { providerID: catalog.providerID, modelID: catalog.id },
+          time: { created: Date.now() },
+        })
+        yield* sessions.updateMessage({
+          id: MessageID.ascending(),
+          role: "assistant",
+          parentID: user.id,
+          sessionID: chat.id,
+          agent: "chat",
+          mode: "chat",
+          path: { cwd: dir, root: dir },
+          cost: 0,
+          tokens: { input: 0, output: 0, reasoning: 0, cache: { read: 0, write: 0 } },
+          modelID: catalog.id,
+          providerID: catalog.providerID,
+          time: { created: Date.now() },
+        })
+        const events = fromResult({
+          custom_id: `kilo-${user.id}`,
+          response: {
+            status_code: 200,
+            body: {
+              choices: [{ finish_reason: "stop", message: { content: "ok" } }],
+              usage: { prompt_tokens: 50_583, completion_tokens: 7857, total_tokens: 58_440, cost: 0.359 },
+            },
+          },
+        })
+        yield* OpenRouterBatchBackfill.apply({
+          sessionID: chat.id,
+          userMessageID: user.id,
+          model: catalog,
+          events,
+        })
+        const msgs = yield* sessions.messages({ sessionID: chat.id })
+        const info = msgs.find((m) => m.info.role === "assistant" && m.info.parentID === user.id)?.info
+        expect(info?.role === "assistant" && info.cost).toBe(0.359)
+      }),
+    ),
+  )
+
+  it.effect("does not apply backfill twice", () =>
+    provideTmpdirProject((dir) =>
+      Effect.gen(function* () {
+        const sessions = yield* Session.Service
+        const chat = yield* sessions.create({ title: "batch once" })
+        const user = yield* sessions.updateMessage({
+          id: MessageID.make("msg_user_once"),
+          role: "user",
+          sessionID: chat.id,
+          agent: "build",
+          model: { providerID: model.providerID, modelID: model.id },
+          time: { created: Date.now() },
+        })
+        yield* sessions.updateMessage({
+          id: MessageID.ascending(),
+          role: "assistant",
+          parentID: user.id,
+          sessionID: chat.id,
+          agent: "build",
+          mode: "build",
+          path: { cwd: dir, root: dir },
+          cost: 0,
+          tokens: { input: 0, output: 0, reasoning: 0, cache: { read: 0, write: 0 } },
+          modelID: model.id,
+          providerID: model.providerID,
+          time: { created: Date.now() },
+        })
+        const events = fromResult({
+          custom_id: `kilo-${user.id}`,
+          response: {
+            status_code: 200,
+            body: {
+              choices: [
+                {
+                  finish_reason: "tool_calls",
+                  message: {
+                    tool_calls: [{ id: "tc_once", function: { name: "read", arguments: "{}" } }],
+                  },
+                },
+              ],
+              usage: { prompt_tokens: 10, completion_tokens: 1, cost: 0.001 },
+            },
+          },
+        })
+        const input = { sessionID: chat.id, userMessageID: user.id, model, events }
+        expect(yield* OpenRouterBatchBackfill.apply(input)).toBe(true)
+        expect(yield* OpenRouterBatchBackfill.apply(input)).toBe(false)
+        const msgs = yield* sessions.messages({ sessionID: chat.id })
+        const parts = msgs.find((m) => m.info.role === "assistant")?.parts ?? []
+        expect(parts.filter((p) => p.type === "tool").length).toBe(1)
+      }),
+    ),
+  )
+
+  it.effect("repairs inflated cost when batch row is reconciled again", () =>
+    provideTmpdirProject((dir) =>
+      Effect.gen(function* () {
+        const sessions = yield* Session.Service
+        const chat = yield* sessions.create({ title: "batch repair" })
+        const user = yield* sessions.updateMessage({
+          id: MessageID.make("msg_user_repair"),
+          role: "user",
+          sessionID: chat.id,
+          agent: "chat",
+          model: { providerID: catalog.providerID, modelID: catalog.id },
+          time: { created: Date.now() },
+        })
+        const assistant = yield* sessions.updateMessage({
+          id: MessageID.ascending(),
+          role: "assistant",
+          parentID: user.id,
+          sessionID: chat.id,
+          agent: "chat",
+          mode: "chat",
+          path: { cwd: dir, root: dir },
+          cost: 1.437888,
+          tokens: { input: 50_583, output: 7857, reasoning: 0, cache: { read: 0, write: 0 } },
+          modelID: catalog.id,
+          providerID: catalog.providerID,
+          finish: "tool-calls",
+          time: { created: Date.now(), completed: Date.now() },
+        })
+        const events = fromResult({
+          custom_id: `kilo-${user.id}`,
+          response: {
+            status_code: 200,
+            body: {
+              choices: [{ finish_reason: "tool_calls", message: { tool_calls: [] } }],
+              usage: { prompt_tokens: 50_583, completion_tokens: 7857, total_tokens: 58_440, cost: 0.359 },
+            },
+          },
+        })
+        const ok = yield* OpenRouterBatchBackfill.apply({
+          sessionID: chat.id,
+          userMessageID: user.id,
+          model: catalog,
+          events,
+        })
+        expect(ok).toBe(true)
+        const msgs = yield* sessions.messages({ sessionID: chat.id })
+        const info = msgs.find((m) => m.info.id === assistant.id)?.info
+        expect(info?.role === "assistant" && info.cost).toBe(0.359)
       }),
     ),
   )

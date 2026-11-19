@@ -46,6 +46,7 @@ import { InstanceStore } from "@/project/instance-store"
 import { InstanceHttpApi } from "@/server/routes/instance/httpapi/api"
 import { ConflictError, InvalidRequestError, UnknownError } from "@/server/routes/instance/httpapi/errors"
 import { Database } from "@opencode-ai/core/database/database"
+import { OpenRouterBatchRetry } from "@/kilocode/openrouter/batch-retry"
 import { BoardStore } from "@/kilocode/board/store"
 import { Skill } from "@/skill"
 import { BackgroundJob } from "@/background/job"
@@ -171,8 +172,10 @@ export const kilocodeHandlers = HttpApiBuilder.group(InstanceHttpApi, "kilocode"
       const session = yield* mapStorageNotFound(sessions.get(id))
       const blocked = new InvalidRequestError({ message: "This session cannot be resumed in its current state." })
       if (session.revert || session.time.archived) return yield* blocked
-      yield* runState.assertNotBusy(id).pipe(Effect.mapError(() => blocked))
-      if ((yield* status.get(id)).type !== "idle") return yield* blocked
+      const busy = yield* runState.assertNotBusy(id).pipe(Effect.exit)
+      if (busy._tag === "Failure") return yield* blocked
+      const phase = (yield* status.get(id)).type
+      if (phase !== "idle") return yield* blocked
       const pending = [
         ...(yield* permission.list()),
         ...(yield* question.list()),
@@ -186,7 +189,14 @@ export const kilocodeHandlers = HttpApiBuilder.group(InstanceHttpApi, "kilocode"
         if (pending.some((request) => family.has(request.sessionID))) return yield* blocked
       }
       const messages = yield* mapStorageNotFound(sessions.messages({ sessionID: id }))
-      if (KiloSessionContinuation.target(messages) !== ctx.payload.messageID) return yield* blocked
+      const row = messages.find((message) => message.info.id === ctx.payload.messageID)
+      if (!KiloSessionContinuation.resumable(messages, ctx.payload.messageID)) return yield* blocked
+      OpenRouterBatchRetry.clearForResume({
+        sessionID: id,
+        assistantMessageID: ctx.payload.messageID,
+        userMessageID:
+          row?.info.role === "assistant" && row.info.parentID ? row.info.parentID : undefined,
+      })
       yield* prompt
         .loop({
           sessionID: id,

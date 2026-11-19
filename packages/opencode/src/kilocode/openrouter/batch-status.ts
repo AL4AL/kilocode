@@ -1,10 +1,6 @@
 // kilocode_change - new file
 import type { SessionID } from "@/session/schema"
 
-function race<T>(promise: Promise<T>) {
-  return Promise.race([promise, new Promise<T>((resolve) => setTimeout(resolve, 50) as T)])
-}
-
 type WaitingInput = {
   sessionID: SessionID
   batchId: string
@@ -16,7 +12,7 @@ type WaitingInput = {
 async function waiting(input: WaitingInput) {
   const { AppRuntime } = await import("@/effect/app-runtime")
   const { SessionStatus } = await import("@/session/status")
-  return AppRuntime.runPromise(
+  await AppRuntime.runPromise(
     SessionStatus.Service.use((status) =>
       status.set(input.sessionID, {
         type: "waiting_batch",
@@ -36,13 +32,13 @@ async function idle(sessionID: SessionID) {
 }
 
 export function setWaitingBatch(input: WaitingInput) {
-  race(waiting({ ...input, phase: input.phase ?? "polling" })).catch(() => undefined)
+  void waiting({ ...input, phase: input.phase ?? "polling" }).catch(() => undefined)
 }
 
 export function setCancellingBatch(input: Omit<WaitingInput, "phase">) {
-  race(waiting({ ...input, phase: "cancelling" })).catch(() => undefined)
+  void waiting({ ...input, phase: "cancelling" }).catch(() => undefined)
 }
 
 export function clearWaitingBatch(sessionID: SessionID) {
-  race(idle(sessionID)).catch(() => undefined)
+  void idle(sessionID).catch(() => undefined)
 }

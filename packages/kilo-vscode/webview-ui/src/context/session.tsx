@@ -1421,8 +1421,9 @@ export const SessionProvider: ParentComponent = (props) => {
   }
 
   function handleResumeResult(message: ExtensionMessage): void {
-    if (message.type !== "sessionResumeResult" || !message.error) return
+    if (message.type !== "sessionResumeResult") return
     finishSubmission(message.requestID)
+    if (!message.error) return
     showToast({ variant: "error", title: language.t("prompt.action.continue"), description: message.error })
   }
 
@@ -2369,14 +2370,14 @@ export const SessionProvider: ParentComponent = (props) => {
         scopedSuggestions(currentSessionID()).length > 0,
     })
 
-  function resume() {
+  function resume(messageID?: string) {
     const sessionID = currentSessionID()
-    const messageID = resumable()
-    if (!server.isConnected() || !sessionID || !messageID) return
+    const target = messageID ?? resumable()
+    if (!server.isConnected() || !sessionID || !target) return
     const requestID = crypto.randomUUID()
     clearClose(sessionID)
     startSubmission(sessionID, requestID)
-    vscode.postMessage({ type: "resumeSession", sessionID, messageID, requestID })
+    vscode.postMessage({ type: "resumeSession", sessionID, messageID: target, requestID })
     queueMicrotask(() => window.dispatchEvent(new CustomEvent("resumeAutoScroll")))
   }
 
@@ -2881,6 +2882,11 @@ export const SessionProvider: ParentComponent = (props) => {
     const activeIdx = activeID
       ? msgs.findIndex((msg) => msg.id === activeID)
       : msgs.findLastIndex((m) => m.role === "user")
+    const info = statusInfo()
+    if (info.type === "waiting_batch") {
+      const id = info.batchId.length > 12 ? `${info.batchId.slice(0, 12)}…` : info.batchId
+      return language.t("session.status.waitingBatch", { batchId: id, modelId: info.modelId })
+    }
     if (activeIdx < 0) return thinking
 
     for (let i = msgs.length - 1; i > activeIdx; i--) {

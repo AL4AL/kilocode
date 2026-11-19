@@ -35,6 +35,18 @@ describe("batch completion events", () => {
     expect(or?.usage?.cost).toBe(0.0012)
   })
 
+  test("rejects empty completion with body error", () => {
+    expect(() =>
+      fromResult({
+        custom_id: "x",
+        response: {
+          status_code: 200,
+          body: { error: { message: "Upstream provider error" } },
+        },
+      }),
+    ).toThrow("Upstream provider error")
+  })
+
   test("maps tool calls", () => {
     const events = fromResult({
       custom_id: "x",

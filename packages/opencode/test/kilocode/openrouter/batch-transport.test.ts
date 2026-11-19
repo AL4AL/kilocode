@@ -9,6 +9,7 @@ const model = {
   providerID: "openrouter",
   api: { id: "anthropic/claude-haiku-5.5-batch" },
   openrouterBatch: true,
+  capabilities: {},
 } as Provider.Model
 
 describe("batch transport stream", () => {
@@ -202,6 +203,69 @@ describe("batch transport stream", () => {
     expect(mock.posts.length).toBe(0)
     expect(events.some((e) => e.type === "text-delta" && e.text === "resumed")).toBe(true)
     OpenRouterBatchStore.clear("kilo-user-1")
+  })
+})
+
+describe("batch transport message normalization", () => {
+  test("batch POST omits reasoning parts in tool-loop history", async () => {
+    process.env.KILO_OPENROUTER_BATCH_POLL_MS = "1"
+    const mock = createBatchFetch({
+      statuses: [
+        {
+          status: "completed",
+          results: [
+            {
+              custom_id: "kilo-user-1",
+              response: {
+                status_code: 200,
+                body: { choices: [{ finish_reason: "stop", message: { content: "ok" } }] },
+              },
+            },
+          ],
+        },
+      ],
+    })
+
+    const stream = OpenRouterBatchTransport.stream({
+      sessionID: "ses_test" as never,
+      userMessageID: "user-1" as never,
+      model,
+      auth: { type: "api", key: "sk-test" },
+      prepared: {
+        system: [],
+        messages: [
+          { role: "user", content: "list files" },
+          {
+            role: "assistant",
+            content: [
+              { type: "reasoning", text: "use bash" },
+              { type: "tool-call", toolCallId: "c1", toolName: "bash", input: { command: "ls" } },
+            ],
+          },
+          {
+            role: "tool",
+            content: [{ type: "tool-result", toolCallId: "c1", toolName: "bash", output: { type: "text", value: "a\nb" } }],
+          },
+        ],
+        tools: {},
+        params: { maxOutputTokens: 1024, options: {} },
+        messageTransformOptions: {},
+        headers: {},
+      },
+      abort: new AbortController().signal,
+      fetch: mock.fetch,
+    })
+
+    await Effect.runPromise(Stream.runCollect(stream))
+    const messages = (
+      mock.posts[0] as {
+        requests?: Array<{ body?: { messages?: Array<{ role?: string; content?: unknown }> } }>
+      }
+    ).requests?.[0]?.body?.messages
+    const assistant = messages?.find((m) => m.role === "assistant")
+    expect(assistant?.content).toBe("use bash")
+    expect((assistant as { tool_calls?: unknown[] }).tool_calls?.length).toBe(1)
+    expect(JSON.stringify(messages)).not.toMatch(/"type":"tool-call"/)
   })
 })
 

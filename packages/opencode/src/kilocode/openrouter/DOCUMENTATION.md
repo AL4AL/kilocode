@@ -18,7 +18,7 @@ Docs read (2026-11-14):
 - Request JSON: `endpoint`, `model`, optional `provider` / `completion_window` / `callback_url` **before** `requests`.
 - One chat step → one batch with a single `requests[]` item (`custom_id` per user message). While that row is in `openrouter-batch.json`, a second `LLM.run` for the same user message **resumes poll** on the stored `batchId` instead of POSTing again (session retries / reconnect during `waiting_batch`).
 - BYOK OpenRouter API key only (not Kilo Gateway batch).
-- Resume: persisted `batchId` in `openrouter-batch.json`; `armBatchResumeLoop()` sweeps every **5s** while `kilo serve` runs (extension enabled). Resume/backfill does not run while `OpenRouterBatchActive` holds the session or the assistant message already has text/reasoning parts (avoids duplicating live batch output). No webhooks, no GCS/BQ `input`.
+- Resume: persisted `batchId` in `openrouter-batch.json`; `armBatchResumeLoop()` sweeps every **5s** while `kilo serve` runs (extension enabled). Resume/backfill does not run while `OpenRouterBatchActive` holds the session or the assistant message already has text/reasoning parts (avoids duplicating live batch output). Backfill records **OpenRouter `usage.cost` only** (no models.dev catalog fallback), is idempotent after the assistant turn is finished, and can correct an inflated stored cost on a later sweep. No webhooks, no GCS/BQ `input`.
 
 ## Polling and failures
 

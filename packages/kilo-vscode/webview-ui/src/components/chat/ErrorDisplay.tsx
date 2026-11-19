@@ -8,6 +8,8 @@ import { Button } from "@kilocode/kilo-ui/button"
 import type { AssistantMessage } from "@kilocode/sdk/v2"
 import { useLanguage } from "../../context/language"
 import { useProvider } from "../../context/provider"
+import { useSession } from "../../context/session"
+import { batchRetryable } from "../../utils/batch-retry"
 import {
   unwrapError,
   parseAssistantError,
@@ -19,6 +21,7 @@ import ProviderConnectDialog from "../settings/ProviderConnectDialog"
 
 export interface ErrorDisplayProps {
   error: NonNullable<AssistantMessage["error"]>
+  resumeMessageID?: string
   onLogin?: () => void
 }
 
@@ -26,6 +29,8 @@ export const ErrorDisplay: Component<ErrorDisplayProps> = (props) => {
   const { t } = useLanguage()
   const dialog = useDialog()
   const provider = useProvider()
+  const session = useSession()
+  const batchRetry = createMemo(() => batchRetryable(props.error) && props.resumeMessageID && session.status() === "idle")
   const parsed = createMemo(() => parseAssistantError(props.error))
   const auth = createMemo(() => parseProviderAuthError(props.error))
   const authProvider = createMemo(() => {
@@ -77,6 +82,13 @@ export const ErrorDisplay: Component<ErrorDisplayProps> = (props) => {
               <ErrorDetails error={props.error} />
             </Collapsible.Content>
           </Collapsible>
+          {batchRetry() ? (
+            <div class="error-card-actions">
+              <Button variant="secondary" size="small" onClick={() => session.resume(props.resumeMessageID)}>
+                {t("prompt.action.retryTurn", { defaultValue: "Retry turn" })}
+              </Button>
+            </div>
+          ) : null}
         </Card>
       }
     >

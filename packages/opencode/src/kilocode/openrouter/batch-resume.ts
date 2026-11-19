@@ -58,7 +58,19 @@ async function finishCompleted(row: PendingBatch, info: BatchInfo, opts?: { fetc
     log.warn("batch resume missing result item", { batchId: row.batchId, customId: row.customId })
     return
   }
-  const events = fromResult(item)
+  let events
+  try {
+    events = fromResult(item)
+  } catch (err) {
+    OpenRouterBatchStore.clear(row.customId)
+    clearWaitingBatch(row.sessionID)
+    log.warn("batch resume upstream result unusable", {
+      batchId: row.batchId,
+      customId: row.customId,
+      err,
+    })
+    return
+  }
   const model = await modelFor(row)
   const app = await runtime()
   const ok = await app.runPromise(
@@ -79,7 +91,6 @@ async function finishCompleted(row: PendingBatch, info: BatchInfo, opts?: { fetc
     })
     return
   }
-  OpenRouterBatchStore.clear(row.customId)
 }
 
 async function pollPending(row: PendingBatch, token: string, opts?: { fetch?: typeof fetch }) {
@@ -107,6 +118,12 @@ function startPoll(row: PendingBatch, token: string, opts?: { fetch?: typeof fet
   if (polling.has(row.batchId)) return
   polling.add(row.batchId)
   void pollPending(row, token, opts).finally(() => polling.delete(row.batchId))
+}
+
+/** Re-register a batch so sweep can backfill after serve restart (no new OpenRouter POST). */
+export function trackPending(row: PendingBatch) {
+  OpenRouterBatchStore.upsert(row)
+  void sweepPending()
 }
 
 /** Reconcile local pending rows with OpenRouter; start long poll loops for in-flight batches. */
