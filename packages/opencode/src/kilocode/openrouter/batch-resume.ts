@@ -8,7 +8,7 @@ import { fromResult } from "./batch-completion"
 import { resolveOpenRouterKey } from "./batch-transport"
 import { OpenRouterBatchStore, type PendingBatch } from "./batch-store"
 import { setWaitingBatch, clearWaitingBatch } from "./batch-status"
-import { OpenRouterBatchBackfill } from "./batch-backfill"
+import { OpenRouterBatchPostCompletion } from "./batch-post-completion"
 import { OpenRouterBatchActive } from "./batch-active"
 import { SessionPrompt } from "@/session/prompt"
 import type { SessionID } from "@/session/schema"
@@ -73,24 +73,37 @@ async function finishCompleted(row: PendingBatch, info: BatchInfo, opts?: { fetc
   }
   const model = await modelFor(row)
   const app = await runtime()
-  const ok = await app.runPromise(
-    OpenRouterBatchBackfill.apply({
+  const outcome = await app.runPromise(
+    OpenRouterBatchPostCompletion.run({
       sessionID: row.sessionID,
       userMessageID: row.userMessageID,
       model,
       events,
+      customId: row.customId,
+      batchId: row.batchId,
     }),
   )
-  if (ok) {
+  if (outcome.persisted || outcome.dispatched) {
     OpenRouterBatchStore.clear(row.customId)
     clearWaitingBatch(row.sessionID)
-    log.info("batch resume backfilled assistant", { batchId: row.batchId, sessionID: row.sessionID })
+    log.info("batch resume post-completion", {
+      batchId: row.batchId,
+      sessionID: row.sessionID,
+      persisted: outcome.persisted,
+      dispatched: outcome.dispatched,
+      continued: outcome.continued,
+    })
     const sid = row.sessionID as SessionID
     await app.runPromise(SessionPrompt.Service.pipe(Effect.flatMap((svc) => svc.titleIfDefault(sid)))).catch((err) => {
       log.warn("batch resume title after backfill failed", { sessionID: sid, err })
     })
     return
   }
+  log.warn("batch post-completion made no progress", {
+    batchId: row.batchId,
+    sessionID: row.sessionID,
+    skippedReason: outcome.skippedReason,
+  })
 }
 
 async function pollPending(row: PendingBatch, token: string, opts?: { fetch?: typeof fetch }) {
