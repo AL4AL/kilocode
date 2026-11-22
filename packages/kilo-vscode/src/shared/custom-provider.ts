@@ -40,6 +40,7 @@ export const CustomProviderConfigSchema = z
           .refine((value) => value.startsWith("http://") || value.startsWith("https://"), {
             message: INVALID_BASE_URL,
           }),
+        timeout: z.number().int().min(1_000).max(3_600_000).optional(),
         headers: z.record(z.string().trim().min(1), z.string().trim().min(1)).optional(),
       })
       .strict(),
@@ -50,6 +51,16 @@ export const CustomProviderConfigSchema = z
           .object({
             name: z.string().trim().min(1).max(200),
             reasoning: z.boolean().optional(),
+            tool_call: z.boolean().optional(),
+            temperature: z.boolean().optional(),
+            limit: z
+              .object({
+                context: z.number().int().positive(),
+                input: z.number().int().positive().optional(),
+                output: z.number().int().positive(),
+              })
+              .optional(),
+            options: z.record(z.string(), z.unknown()).optional(),
             modalities: ModelModalitiesSchema.optional(),
             variants: z.record(z.string().trim().min(1), VariantConfigSchema).optional(),
           })
@@ -65,11 +76,21 @@ export type SanitizedProviderConfig = {
   env?: string[]
   options: {
     baseURL: string
+    timeout?: number
     headers?: Record<string, string>
   }
   models: Record<
     string,
-    { name: string; reasoning?: true; modalities?: ModelModalities; variants?: Record<string, VariantConfig> }
+    {
+      name: string
+      reasoning?: boolean
+      tool_call?: boolean
+      temperature?: boolean
+      limit?: { context: number; input?: number; output: number }
+      options?: Record<string, unknown>
+      modalities?: ModelModalities
+      variants?: Record<string, VariantConfig>
+    }
   >
 }
 
@@ -133,6 +154,7 @@ export function normalizeCustomProviderConfig(
     ...(config.env ? { env: config.env.map((item) => item.trim()) } : {}),
     options: {
       baseURL: config.options.baseURL.trim(),
+      ...(config.options.timeout !== undefined ? { timeout: config.options.timeout } : {}),
       ...(headers && Object.keys(headers).length > 0 ? { headers } : {}),
     },
     models: Object.fromEntries(
@@ -140,7 +162,11 @@ export function normalizeCustomProviderConfig(
         id.trim(),
         {
           name: model.name.trim(),
-          ...(model.reasoning ? { reasoning: true as const } : {}),
+          ...(model.reasoning !== undefined ? { reasoning: model.reasoning } : {}),
+          ...(model.tool_call !== undefined ? { tool_call: model.tool_call } : {}),
+          ...(model.temperature !== undefined ? { temperature: model.temperature } : {}),
+          ...(model.limit ? { limit: model.limit } : {}),
+          ...(model.options ? { options: model.options } : {}),
           ...(model.modalities ? { modalities: model.modalities } : {}),
           ...(model.variants && Object.keys(model.variants).length > 0 ? { variants: model.variants } : {}),
         },
@@ -161,20 +187,31 @@ export function sanitizeCustomProviderConfig(provider: unknown): { value: Saniti
 
 type AnyRecord = Record<string, unknown>
 type VariantPatch = Partial<{ [Key in keyof VariantConfig]: VariantConfig[Key] | null }>
+type ModelPatch = {
+  name: string
+  reasoning?: boolean | null
+  tool_call?: boolean | null
+  temperature?: boolean | null
+  limit?: { context: number; input?: number; output: number } | null
+  options?: Record<string, unknown | null> | null
+  modalities?: ModelModalities | null
+  variants?: Record<string, VariantConfig | VariantPatch | null> | null
+}
 type ProviderPatch = Omit<SanitizedProviderConfig, "models"> & {
-  models: Record<
-    string,
-    null | {
-      name: string
-      reasoning?: true | null
-      modalities?: ModelModalities | null
-      variants?: Record<string, VariantConfig | VariantPatch | null>
-    }
-  >
+  models: Record<string, null | ModelPatch>
 }
 
 function isRecord(v: unknown): v is AnyRecord {
   return !!v && typeof v === "object" && !Array.isArray(v)
+}
+
+function patchOptions(old: unknown, next: unknown): Record<string, unknown | null> | null | undefined {
+  if (next === undefined) return old === undefined ? undefined : null
+  if (!isRecord(next)) return null
+  const prev = isRecord(old) ? old : {}
+  const removed = Object.keys(prev).filter((key) => !(key in next))
+  if (removed.length === 0) return next
+  return { ...next, ...Object.fromEntries(removed.map((key) => [key, null])) }
 }
 
 /**
@@ -213,11 +250,17 @@ export function withCustomProviderDeletions(existing: unknown, next: SanitizedPr
       changes[name] = { ...newVariant, ...nulls } as VariantPatch
     }
     const variants = Object.keys(changes).length > 0 ? { ...newVariants, ...changes } : newModel.variants
+    const options = patchOptions(oldModel.options, newModel.options)
+    const deleted = Object.fromEntries(
+      ["reasoning", "tool_call", "temperature", "limit", "options", "modalities"]
+        .filter((key) => oldModel[key] !== undefined && !(key in newModel))
+        .map((key) => [key, null]),
+    )
     patched[id] = {
       ...newModel,
       ...(variants ? { variants } : {}),
-      ...(oldModel.reasoning !== undefined && newModel.reasoning === undefined ? { reasoning: null } : {}),
-      ...(oldModel.modalities !== undefined && newModel.modalities === undefined ? { modalities: null } : {}),
+      ...(options !== undefined ? { options } : {}),
+      ...deleted,
     }
   }
 

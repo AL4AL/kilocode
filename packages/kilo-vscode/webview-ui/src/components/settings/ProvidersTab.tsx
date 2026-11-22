@@ -15,6 +15,7 @@ import { useServer } from "../../context/server"
 import { useVSCode } from "../../context/vscode"
 import type { Provider } from "../../types/messages"
 import CustomProviderDialog from "./CustomProviderDialog"
+import LlamaCppDialog from "./LlamaCppDialog"
 import ProviderConnectDialog from "./ProviderConnectDialog"
 import ProviderSelectDialog from "./ProviderSelectDialog"
 import {
@@ -32,7 +33,7 @@ import {
   providersWithKiloFallback,
   visibleConnectedIds,
 } from "./provider-visibility"
-import { isCustomProviderPackage, KILO_PROVIDER_ID } from "../../../../src/shared/provider-model"
+import { isCustomProviderPackage, KILO_PROVIDER_ID, LLAMA_CPP_PROVIDER_ID } from "../../../../src/shared/provider-model"
 import { createProviderAction } from "../../utils/provider-action"
 
 type ProviderSource = "env" | "api" | "config" | "custom"
@@ -70,7 +71,11 @@ const ProvidersTab: Component = () => {
     return sortProviders(
       all.filter(
         (item) =>
-          item.id !== KILO_PROVIDER_ID && isPopularProvider(item) && !connected.has(item.id) && !disabled.has(item.id),
+          item.id !== KILO_PROVIDER_ID &&
+          item.id !== LLAMA_CPP_PROVIDER_ID &&
+          isPopularProvider(item) &&
+          !connected.has(item.id) &&
+          !disabled.has(item.id),
       ),
     )
   })
@@ -114,6 +119,10 @@ const ProvidersTab: Component = () => {
   function editProvider(item: Provider) {
     const cfg = config().provider?.[item.id]
     if (!cfg) return
+    if (item.id === LLAMA_CPP_PROVIDER_ID) {
+      dialog.show(() => <LlamaCppDialog />)
+      return
+    }
     dialog.show(() => <CustomProviderDialog existing={{ providerID: item.id, name: item.name, config: cfg }} />)
   }
 
@@ -160,6 +169,10 @@ const ProvidersTab: Component = () => {
       // `startLogin()` from here alone would run the flow silently with no
       // way to recover if the browser is dismissed.
       server.goToLogin()
+      return
+    }
+    if (item.id === LLAMA_CPP_PROVIDER_ID) {
+      dialog.show(() => <LlamaCppDialog />)
       return
     }
     dialog.show(() => <ProviderConnectDialog providerID={item.id} />)
@@ -327,7 +340,10 @@ const ProvidersTab: Component = () => {
                   </Show>
                   <Show when={canDisconnect(item)}>
                     <Show
-                      when={canChangeProviderKey(item, config().provider?.[item.id], provider.authMethods()[item.id])}
+                      when={
+                        item.id !== LLAMA_CPP_PROVIDER_ID &&
+                        canChangeProviderKey(item, config().provider?.[item.id], provider.authMethods()[item.id])
+                      }
                     >
                       <Button size="large" variant="ghost" onClick={() => connectProvider(item)}>
                         {language.t("settings.providers.action.changeApiKey")}
@@ -335,7 +351,11 @@ const ProvidersTab: Component = () => {
                     </Show>
                     <Show when={isCustom(item)}>
                       <Button size="large" variant="ghost" onClick={() => editProvider(item)}>
-                        {language.t("provider.custom.edit.title")}
+                        {language.t(
+                          item.id === LLAMA_CPP_PROVIDER_ID
+                            ? "settings.providers.llamaCpp.edit"
+                            : "provider.custom.edit.title",
+                        )}
                       </Button>
                     </Show>
                     <Button size="large" variant="ghost" onClick={() => disconnect(item.id, item.name)}>
@@ -404,6 +424,60 @@ const ProvidersTab: Component = () => {
             )
           }}
         </For>
+
+        <Show
+          when={
+            !connectedProviders().some((item) => item.id === LLAMA_CPP_PROVIDER_ID) &&
+            !disabledIds().has(LLAMA_CPP_PROVIDER_ID)
+          }
+        >
+          <div
+            style={{
+              display: "flex",
+              "flex-wrap": "wrap",
+              "align-items": "center",
+              "justify-content": "space-between",
+              gap: "16px",
+              "min-height": "56px",
+              padding: "12px 0",
+              "border-bottom": "1px solid var(--border-weak-base)",
+            }}
+          >
+            <div style={{ display: "flex", "flex-direction": "column", "min-width": 0 }}>
+              <div style={{ display: "flex", "align-items": "center", gap: "12px" }}>
+                <ProviderIcon id={providerIcon(LLAMA_CPP_PROVIDER_ID)} width={20} height={20} />
+                <span
+                  style={{
+                    "font-size": "var(--kilo-font-size-14)",
+                    "font-weight": "500",
+                    color: "var(--vscode-foreground)",
+                  }}
+                >
+                  llama.cpp
+                </span>
+              </div>
+              <span
+                style={{
+                  "font-size": "var(--kilo-font-size-12)",
+                  color: "var(--text-weak-base, var(--vscode-descriptionForeground))",
+                  "padding-left": "32px",
+                }}
+              >
+                {language.t("settings.providers.llamaCpp.cardDescription")}
+              </span>
+            </div>
+            <Button
+              size="large"
+              variant="secondary"
+              icon={config().provider?.[LLAMA_CPP_PROVIDER_ID] ? "edit" : "plus-small"}
+              onClick={() => dialog.show(() => <LlamaCppDialog />)}
+            >
+              {config().provider?.[LLAMA_CPP_PROVIDER_ID]
+                ? language.t("settings.providers.llamaCpp.edit")
+                : language.t("settings.providers.llamaCpp.setup")}
+            </Button>
+          </div>
+        </Show>
 
         {/* Custom provider entry */}
         <div

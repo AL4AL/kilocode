@@ -36,6 +36,7 @@ export type ModelEntry = {
   reasoning: boolean
   supportsImages: boolean
   modalities: Modalities
+  advanced?: Record<string, unknown>
   variants: VariantEntry[]
 }
 

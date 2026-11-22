@@ -36,6 +36,7 @@ Major AI companies offering powerful models via API:
 
 Run models on your own hardware for privacy and offline use:
 
+- **[llama.cpp](/docs/ai-providers/llama-cpp)** - Connect a local llama.cpp server from the VS Code extension
 - **[Atomic Chat](/docs/ai-providers/atomic-chat)** - Local models with TurboQuant inference and auto-discovery in Kilo Code
 - **[Anaconda Desktop](/docs/ai-providers/anaconda-desktop)** - Discover and connect to a local text-generation model server
 - **[Ollama](/docs/ai-providers/ollama)** - Easy local model management

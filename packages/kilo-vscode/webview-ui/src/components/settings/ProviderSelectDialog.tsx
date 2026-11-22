@@ -21,7 +21,8 @@ import {
   providerIcon,
 } from "./provider-catalog"
 import CustomProviderDialog from "./CustomProviderDialog"
-import { KILO_PROVIDER_ID } from "../../../../src/shared/provider-model"
+import LlamaCppDialog from "./LlamaCppDialog"
+import { KILO_PROVIDER_ID, LLAMA_CPP_PROVIDER_ID } from "../../../../src/shared/provider-model"
 
 type ProviderItem = {
   id: string
@@ -72,6 +73,11 @@ const ProviderSelectDialog = () => {
       dialog.close()
       // Navigate to the Profile view so the full device-auth UI is visible.
       server.goToLogin()
+      return
+    }
+
+    if (item.id === LLAMA_CPP_PROVIDER_ID) {
+      dialog.show(() => <LlamaCppDialog />)
       return
     }
 

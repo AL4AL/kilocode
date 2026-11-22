@@ -60,6 +60,10 @@ type FetchedModel = { id: string; name: string }
 type RawModel = {
   name?: string
   reasoning?: boolean
+  tool_call?: boolean
+  temperature?: boolean
+  limit?: { context?: number; input?: number; output?: number }
+  options?: Record<string, unknown>
   modalities?: { input?: unknown; output?: unknown }
   variants?: Record<string, Record<string, unknown>>
 }
@@ -122,6 +126,9 @@ function initModels(cfg: ProviderConfig | undefined): ModelEntry[] {
       reasoning: raw.reasoning ?? false,
       supportsImages: input.includes("image"),
       modalities,
+      advanced: Object.fromEntries(
+        Object.entries(raw).filter(([key]) => ["tool_call", "temperature", "limit", "options"].includes(key)),
+      ),
       variants: Object.entries(raw.variants ?? {}).map(parseVariant),
     }
   })
@@ -149,11 +156,13 @@ function resolveAuth(existing: ExistingProvider | undefined, states: Record<stri
 
 function initForm(existing: ExistingProvider | undefined, auth: ProviderAuthState | undefined): FormState {
   const npm = existing?.config?.npm
+  const opts = existing?.config?.options as { timeout?: number } | undefined
   return {
     providerID: existing?.providerID ?? "",
     name: existing?.name ?? "",
     npm: isCustomProviderPackage(npm) ? npm : CUSTOM_PROVIDER_PACKAGE,
     baseURL: (existing?.config?.options as { baseURL?: string } | undefined)?.baseURL ?? "",
+    timeout: opts?.timeout,
     apiKey: resolveCustomProviderKey(auth),
     models: initModels(existing?.config),
     headers: initHeaders(existing?.config),

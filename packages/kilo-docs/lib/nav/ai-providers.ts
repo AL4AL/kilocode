@@ -62,6 +62,7 @@ export const AiProvidersNav: NavSection[] = [
   {
     title: "Local & Self-Hosted",
     links: [
+      { href: "/ai-providers/llama-cpp", children: "llama.cpp" },
       { href: "/ai-providers/ollama", children: "Ollama" },
       { href: "/ai-providers/lmstudio", children: "LM Studio" },
       { href: "/ai-providers/atomic-chat", children: "Atomic Chat" },

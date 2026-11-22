@@ -13,6 +13,7 @@ export type FormState = {
   name: string
   npm: CustomProviderPackage
   baseURL: string
+  timeout?: number
   apiKey: string
   models: ModelEntry[]
   headers: HeaderRow[]
@@ -47,7 +48,7 @@ type ValidateResult = {
       npm: CustomProviderPackage
       name: string
       env?: string[]
-      options: { baseURL: string; headers?: Record<string, string> }
+      options: { baseURL: string; timeout?: number; headers?: Record<string, string> }
       models: Record<string, unknown>
     }
   }
@@ -141,7 +142,7 @@ function modalities(m: ModelEntry): Modalities | undefined {
 
 function serializeModel(m: ModelEntry): [string, Record<string, unknown>] {
   const ventries = m.reasoning ? m.variants.filter((v) => v.name.trim()).map(serializeVariant) : []
-  const entry: Record<string, unknown> = { name: m.name.trim() }
+  const entry: Record<string, unknown> = { ...m.advanced, name: m.name.trim() }
   const modes = modalities(m)
   if (m.reasoning) entry.reasoning = true
   if (modes) entry.modalities = modes
@@ -209,6 +210,7 @@ export function validateCustomProvider(input: ValidateArgs): ValidateResult {
 
   const options = {
     baseURL,
+    ...(input.form.timeout !== undefined ? { timeout: input.form.timeout } : {}),
     ...(Object.keys(headers).length ? { headers } : {}),
   }
 

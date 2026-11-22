@@ -1,6 +1,7 @@
 import type { ProviderFailure } from "@kilocode/sdk/v2/client"
 
 export const KILO_PROVIDER_ID = "kilo"
+export const LLAMA_CPP_PROVIDER_ID = "llama-cpp"
 export const KILO_AUTO = { providerID: KILO_PROVIDER_ID, modelID: "kilo-auto/free" } as const
 export const CUSTOM_PROVIDER_PACKAGES = ["@ai-sdk/openai-compatible", "@ai-sdk/openai", "@ai-sdk/anthropic"] as const
 export type CustomProviderPackage = (typeof CUSTOM_PROVIDER_PACKAGES)[number]
@@ -16,6 +17,7 @@ export const PROVIDER_PRIORITY = [
   "google",
   "openrouter",
   "vercel",
+  LLAMA_CPP_PROVIDER_ID,
 ] as const
 
 export function isCustomProviderPackage(value: unknown): value is CustomProviderPackage {
