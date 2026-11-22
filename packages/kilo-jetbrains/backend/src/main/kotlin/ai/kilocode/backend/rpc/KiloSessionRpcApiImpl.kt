@@ -126,6 +126,13 @@ class KiloSessionRpcApiImpl internal constructor(
         return sessions.get(id, dir)
     }
 
+    override suspend fun find(id: String, directory: String): SessionDto? {
+        app.requireReady()
+        requireLocal(id, "find")
+        val dir = sessions.getDirectory(id, directory)
+        return withContext(Dispatchers.IO) { sessions.find(id, dir) }
+    }
+
     override suspend fun delete(id: String, directory: String) {
         app.requireReady()
         requireLocal(id, "delete")
@@ -408,7 +415,7 @@ class KiloSessionRpcApiImpl internal constructor(
 
     override suspend fun savePermissionRules(requestId: String, directory: String, rules: PermissionAlwaysRulesDto) {
         app.requireReady()
-        if (HostedIDs.isWorkspace(directory)) return
+        requireLocalDir(directory, "savePermissionRules")
         log.info("savePermissionRules: requestId=$requestId")
         chat.savePermissionRules(requestId, directory, rules)
     }

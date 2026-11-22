@@ -805,6 +805,7 @@ export const dict = {
 
   "dialog.model.noProviders": "Sağlayıcı yok",
   "dialog.model.unavailable": "Kilo modelleri kullanılamıyor",
+  "dialog.model.loadFailed": "Bu proje için sağlayıcılar yüklenemedi.",
 
   "prompt.placeholder.connecting": "Sunucuya bağlanılıyor...",
   "prompt.placeholder.default":
@@ -856,8 +857,9 @@ export const dict = {
 
   "settings.aboutKiloCode.telemetry.title": "Telemetri",
   "settings.aboutKiloCode.telemetry.description":
-    "Telemetri, VS Code'un yerleşik telemetri ayarı tarafından kontrol edilir. Devre dışı bırakmak için Ayarlar > Telemetri > Telemetri Düzeyi'ne gidin ve \"off\" olarak ayarlayın. Değişikliği uygulamak için VS Code'u yeniden başlatın.",
-  "settings.aboutKiloCode.telemetry.openSettings": "Telemetri Ayarlarını Aç",
+    "Kilo'nun telemetri ayarını değiştirmek için bu anahtarı kullanın. VS Code veya çalışma ortamı telemetriyi devre dışı bırakırsa telemetri kapalı kalır.",
+  "settings.aboutKiloCode.telemetry.toggle": "Telemetriyi etkinleştir",
+  "settings.aboutKiloCode.telemetry.saveFailed": "Telemetri ayarı güncellenemedi",
 
   "settings.agentBehaviour.subtab.agents": "Ajanlar",
   "settings.agentBehaviour.subtab.mcpServers": "MCP Sunucuları",
@@ -1393,6 +1395,9 @@ export const dict = {
   "settings.saveBar.cancel": "İptal",
   "settings.saveBar.saving": "Kaydediliyor…",
   "settings.saveBar.saveFailed": "Ayarlar kaydedilemedi",
+  "settings.saveBar.dismissError": "Kapat",
+  "settings.saveBar.unconfirmedWrite": "“{{name}}” uzantı ana bilgisayarı tarafından onaylanmadı.",
+  "settings.saveBar.unconfirmedSave": "Kaydetme uzantı ana bilgisayarı tarafından onaylanmadı. Tekrar deneyin.",
   "notifications.action.next": "Sonraki",
   "notifications.action.close": "Kapat",
   "notifications.action.tryModel": "Dene {{model}}",
@@ -1403,6 +1408,8 @@ export const dict = {
   "settings.indexing.kiloSignIn.description": "Hosted embeddings kullanmak için Kilo'da oturum açın.",
   // Missing translations - English fallbacks until translated
   "profile.switchingAccount": "Hesap değiştiriliyor…",
+  "profile.unavailableAccount": "Kullanılamayan hesap",
+  "profile.switchFailed": "Hesap değişikliği doğrulanamadı.",
   "settings.agentBehaviour.createMode": "Yeni Mod Oluştur",
   "settings.agentBehaviour.createMode.button": "Oluştur",
   "settings.agentBehaviour.createMode.cancel": "İptal",

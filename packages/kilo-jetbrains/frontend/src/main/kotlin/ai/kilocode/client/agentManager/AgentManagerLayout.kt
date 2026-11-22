@@ -16,7 +16,10 @@ import java.util.UUID
 @Suppress("TooManyFunctions")
 internal class AgentManagerLayout(private val properties: PropertiesComponent? = null) {
     @Serializable
-    data class Section(override val key: String, override val title: String, val color: String? = null) : ActiveItem
+    data class Section(override val key: String, override val title: String, val color: String? = null) : ActiveItem {
+        // The backdrop stays the same on hover and selection; selection is painted as an underline.
+        override val alwaysSelected = true
+    }
 
     @Serializable
     private data class State(
@@ -36,6 +39,25 @@ internal class AgentManagerLayout(private val properties: PropertiesComponent? =
     private var pinned: String? = null
 
     fun section(key: String): Section? = state.sections.firstOrNull { it.key == key }
+
+    fun sections(): List<Section> {
+        val rank = order[ROOT].orEmpty().withIndex().associate { it.value to it.index }
+        return state.sections.sortedBy { rank[it.key] ?: Int.MAX_VALUE }
+    }
+
+    fun parent(key: String): String? = state.membership[key]?.takeIf { section(it) != null }
+
+    @RequiresEdt
+    fun replace(previous: String, key: String) {
+        if (previous == key || previous == pinned || key == pinned) return
+        val membership = state.membership - previous - key
+        save(state.copy(
+            membership = parent(previous)?.let { membership + (key to it) } ?: membership,
+            order = order.mapValues { (_, keys) ->
+                keys.filterNot { it == key }.map { if (it == previous) key else it }
+            },
+        ))
+    }
 
     fun neighbors(key: String): List<String> {
         val keys = order[ROOT].orEmpty().flatMap { id ->
@@ -89,6 +111,24 @@ internal class AgentManagerLayout(private val properties: PropertiesComponent? =
         ))
     }
 
+    /** Adds a newly created row at the top of [section], or at the top of the root list. */
+    @RequiresEdt
+    fun insert(key: String, section: String?) {
+        if (key == pinned || this.section(key) != null) return
+        if (section != null && this.section(section) == null) return
+        val target = section ?: ROOT
+        val membership = if (section == null) state.membership - key else state.membership + (key to section)
+        val order = order.mapValues { (_, keys) -> keys.filterNot { it == key } }
+        save(state.copy(membership = membership, order = order + (target to (listOf(key) + order[target].orEmpty()))))
+    }
+
+    @RequiresEdt
+    fun move(key: String, section: String?) {
+        if (parent(key) == section) return
+        val keys = order[section ?: ROOT].orEmpty().filterNot { it == key } + key
+        move(ActiveMove(key, 0, keys.lastIndex, keys, parent = section, previous = parent(key)))
+    }
+
     @RequiresEdt
     fun move(move: ActiveMove) {
         if (move.key == pinned) return
@@ -113,13 +153,16 @@ internal class AgentManagerLayout(private val properties: PropertiesComponent? =
     fun nodes(items: List<ActiveItem>, pin: String? = null): List<ActiveTreeNode> {
         pinned = pin ?: pinned
         assign()
-        val sections = state.sections.associateBy { it.key }
-        val grouped = items.groupBy { state.membership[it.key]?.takeIf(sections::containsKey) ?: ROOT }
+        // The tree is keyed, so a repeated item or a corrupted section list must not emit two nodes
+        // with one key. Keep the first occurrence, which is the caller's preferred ordering.
+        val sections = state.sections.distinctBy { it.key }.associateBy { it.key }
+        val grouped = items.distinctBy { it.key }.groupBy { state.membership[it.key]?.takeIf(sections::containsKey) ?: ROOT }
         fun sorted(parent: String, rows: List<ActiveItem>): List<ActiveItem> {
             val rank = state.order[parent].orEmpty().withIndex().associate { it.value to it.index }
             return rows.sortedBy { rank[it.key] ?: Int.MAX_VALUE }
         }
-        val nodes = sorted(ROOT, grouped[ROOT].orEmpty() + state.sections).map { item ->
+        val roots = (grouped[ROOT].orEmpty() + sections.values).distinctBy { it.key }
+        val nodes = sorted(ROOT, roots).map { item ->
             ActiveTreeNode(item, sections[item.key]?.let { section ->
                 sorted(section.key, grouped[section.key].orEmpty()).map { ActiveTreeNode(it) }
             }, color = ActiveTreeColors.color(sections[item.key]?.color))

@@ -2,7 +2,7 @@
   "name": "kilo-code-surge",
   "displayName": "Kilo Code Surge (Kilo+): AI Coding Agent",
   "description": "Kilo Code Surge (Kilo+) — AL4AL distribution built on Kilo Code. Same open-source AI coding agent with Surge extras (OpenRouter batch models, Chat agent, and integrations ahead of upstream).",
-  "version": "7.8.29-surge.28",
+  "version": "7.8.32-surge.28",
   "icon": "assets/icons/logo-outline-black.png",
   "galleryBanner": {
     "color": "#0B1020",
@@ -1129,6 +1129,7 @@
         "kilo-code-surge.new.autoApprove.enabled": {
           "type": "boolean",
           "default": false,
+          "scope": "application",
           "description": "Start Kilo Code with the main auto-approve toggle enabled. When enabled, permission prompts are approved automatically. Sandbox escalation prompts are always excluded."
         },
         "kilo-code-surge.new.maxCost": {
