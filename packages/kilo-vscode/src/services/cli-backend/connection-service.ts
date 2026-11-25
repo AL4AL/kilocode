@@ -7,6 +7,9 @@ import { createDuplicateEventFilter, resolveEventSessionId as resolveEventSessio
 import { SandboxPreference } from "../sandbox-preference"
 import { ExplicitAbortState } from "./explicit-abort"
 import type { PermissionResponseResult } from "../../kilo-provider/handlers/permission-handler"
+import { createNativeRuntime } from "../native-runtime/runtime"
+import type { NativeSecretStorage } from "../native-runtime/providers"
+import { createNativeSessionBridge } from "../../kilo-provider/native-session-bridge"
 
 export type ConnectionState = "connecting" | "connected" | "disconnected" | "error"
 type SSEEventListener = (event: SSEPayload, directory?: string) => void
@@ -97,6 +100,10 @@ export class KiloConnectionService {
   private error: Error | null = null
   private connectPromise: Promise<void> | null = null
   private healthPollTimer: ReturnType<typeof setInterval> | null = null
+  private runtime: ReturnType<typeof createNativeRuntime> | undefined
+  private bridges = new Set<ReturnType<typeof createNativeSessionBridge>>()
+  private root: string | undefined
+  private secrets: NativeSecretStorage | undefined
 
   private readonly eventListeners: Set<SSEEventListener> = new Set()
   private readonly filteredListeners = new Set<{ filter: SSEEventFilter; listener: SSEEventListener }>()
@@ -153,6 +160,8 @@ export class KiloConnectionService {
     env?: () => Promise<Record<string, string>>,
     private readonly prepare?: (directory: string) => Promise<void>,
   ) {
+    this.root = context.globalStorageUri?.fsPath
+    this.secrets = context.secrets
     const state =
       context.workspaceState ??
       ({
@@ -203,6 +212,29 @@ export class KiloConnectionService {
       throw new Error("Not connected — call connect() first")
     }
     return this.client
+  }
+
+  getNativeRuntime() {
+    if (this.runtime) return this.runtime
+    if (!this.root || !this.secrets) throw new Error("Native runtime storage is unavailable in this extension context")
+    this.runtime = createNativeRuntime({
+      root: this.root,
+      secrets: this.secrets,
+      trusted: () => vscode.workspace.isTrusted,
+    })
+    return this.runtime
+  }
+
+  createNativeSessionBridge(dir: string, post: (message: unknown) => void) {
+    const bridge = createNativeSessionBridge(this.getNativeRuntime(), dir, post)
+    this.bridges.add(bridge)
+    return {
+      ...bridge,
+      dispose: () => {
+        bridge.dispose()
+        this.bridges.delete(bridge)
+      },
+    }
   }
 
   async prepareTools(directory: string): Promise<void> {
@@ -827,6 +859,10 @@ export class KiloConnectionService {
    */
   dispose(): void {
     this.stopHealthPoll()
+    for (const bridge of this.bridges) bridge.dispose()
+    this.bridges.clear()
+    this.runtime?.dispose()
+    this.runtime = undefined
     this.sseClient?.dispose()
     this.serverManager.dispose()
     this.eventListeners.clear()
@@ -871,6 +907,8 @@ export class KiloConnectionService {
     this.unsubRemote = null
     this.client = null
     this.sseClient = null
+    this.root = undefined
+    this.secrets = undefined
     this.config = null
     this.info = null
     this.state = "disconnected"

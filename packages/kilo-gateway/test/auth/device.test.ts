@@ -10,7 +10,10 @@ test("device initiation preserves the POST, JSON, and rate-limit error", async (
 
   await expect(initiateDeviceAuth()).resolves.toEqual(data)
   expect(request.mock.calls).toStrictEqual([
-    [`${KILO_API_BASE}/api/device-auth/codes`, { method: "POST", headers: { "Content-Type": "application/json" } }],
+    [
+      `${KILO_API_BASE}/api/device-auth/codes`,
+      { method: "POST", headers: { "Content-Type": "application/json" }, redirect: "error" },
+    ],
   ])
   request.mockResolvedValue(new Response(null, { status: 429 }))
   await expect(initiateDeviceAuth()).rejects.toThrow("Too many pending authorization requests. Please try again later.")
@@ -21,7 +24,25 @@ test("device polling preserves the bare GET and JSON", async () => {
   const request = spyOn(globalThis, "fetch").mockResolvedValue(Response.json(data))
 
   await expect(pollDeviceAuth("code/with space")).resolves.toEqual(data)
-  expect(request.mock.calls).toStrictEqual([[`${KILO_API_BASE}/api/device-auth/codes/code/with space`]])
+  expect(request.mock.calls).toStrictEqual([
+    [`${KILO_API_BASE}/api/device-auth/codes/code%2Fwith%20space`, { redirect: "error" }],
+  ])
+})
+
+test("device endpoints accept an override base URL and AbortSignal", async () => {
+  const signal = new AbortController().signal
+  const request = spyOn(globalThis, "fetch").mockImplementation(async () => Response.json({ status: "pending" }))
+
+  await initiateDeviceAuth({ baseURL: "https://gateway.example/", signal })
+  await pollDeviceAuth("code", { baseURL: "https://gateway.example/", signal })
+
+  expect(request.mock.calls).toStrictEqual([
+    [
+      "https://gateway.example/api/device-auth/codes",
+      { method: "POST", headers: { "Content-Type": "application/json" }, signal, redirect: "error" },
+    ],
+    ["https://gateway.example/api/device-auth/codes/code", { signal, redirect: "error" }],
+  ])
 })
 
 test.each([

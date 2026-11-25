@@ -169,6 +169,7 @@ export async function fetchKiloTranscriptionModels(options?: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     signal: AbortSignal.timeout(MODELS_FETCH_TIMEOUT_MS),
+    redirect: "error",
   }).catch((err: unknown) => err as Error)
 
   if (response instanceof Error) return { models: [], error: { kind: "network" } }
@@ -233,6 +234,7 @@ async function fetchRawKiloModels(options?: {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     signal: AbortSignal.timeout(MODELS_FETCH_TIMEOUT_MS),
+    redirect: "error",
   }).catch((err: unknown) => err as Error)
 
   if (response instanceof Error) {
