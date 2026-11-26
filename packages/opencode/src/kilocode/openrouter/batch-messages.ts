@@ -6,41 +6,26 @@ type Part = { type: string; text?: string; toolCallId?: string; toolName?: strin
 type Assistant = Extract<ModelMessage, { role: "assistant" }>
 type AssistantParts = Extract<Assistant["content"], unknown[]>
 
-function thinking(part: AssistantParts[number]) {
-  if (part.type !== "reasoning") return ""
-  return part.text.trim()
-}
-
 function stripReasoning(content: AssistantParts) {
   return content.filter((p) => p.type !== "reasoning") as AssistantParts
 }
 
-function mergeThought(content: AssistantParts, thought: string): AssistantParts {
-  if (thought.length === 0) return content
-  const next = [...content]
-  const i = next.findIndex((p) => p.type === "text")
-  if (i >= 0) {
-    const part = next[i]
-    if (part.type !== "text") return next
-    const tail = part.text.trim()
-    next[i] = { ...part, text: tail.length > 0 ? `${thought}\n\n${part.text}` : thought }
-    return next
-  }
-  return [{ type: "text", text: thought }, ...next]
-}
-
+/** Reasoning never goes back on the wire: batch providers (e.g. Gemini) reject it, and merging it into text before tool calls breaks the line schema. */
 function scrubReasoning(msg: ModelMessage): ModelMessage {
   if (!Array.isArray(msg.content)) return msg
   const parts = msg.content as AssistantParts
   if (!parts.some((p) => p.type === "reasoning")) return msg
-  if (msg.role !== "assistant") return { ...msg, content: stripReasoning(parts) } as ModelMessage
-  const thought = parts
-    .map((p) => thinking(p))
-    .filter((t) => t.length > 0)
-    .join("\n\n")
-  const bare = stripReasoning(parts)
-  if (!bare.some((p) => p.type === "tool-call")) return { ...msg, content: bare }
-  return { ...msg, content: mergeThought(bare, thought) }
+  return { ...msg, content: stripReasoning(parts) } as ModelMessage
+}
+
+/** Drop ai-sdk-only fields (providerOptions, etc.) from array content parts so each line matches the chat schema. */
+function cleanPart(part: unknown) {
+  if (part == null || typeof part !== "object") return part
+  const row = { ...(part as Record<string, unknown>) }
+  delete row.providerOptions
+  delete row.providerMetadata
+  if (row.type === "text") return { type: "text", text: row.text ?? "" }
+  return row
 }
 
 function args(input: unknown) {
@@ -123,6 +108,10 @@ export function normalizeBatchMessages(msgs: ModelMessage[]): BatchWire[] {
     }
     if (typeof msg.content === "string" || msg.content == null) {
       wire.push({ role: msg.role, content: msg.content ?? "" })
+      continue
+    }
+    if (Array.isArray(msg.content)) {
+      wire.push({ role: msg.role, content: msg.content.map(cleanPart) })
       continue
     }
     wire.push(msg as BatchWire)

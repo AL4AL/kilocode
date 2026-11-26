@@ -263,7 +263,7 @@ describe("batch transport message normalization", () => {
       }
     ).requests?.[0]?.body?.messages
     const assistant = messages?.find((m) => m.role === "assistant")
-    expect(assistant?.content).toBe("use bash")
+    expect(assistant?.content).toBeNull()
     expect((assistant as { tool_calls?: unknown[] }).tool_calls?.length).toBe(1)
     expect(JSON.stringify(messages)).not.toMatch(/"type":"tool-call"/)
   })

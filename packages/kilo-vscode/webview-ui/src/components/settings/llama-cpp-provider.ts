@@ -19,6 +19,11 @@ export const LLAMA_CPP_DEFAULTS = {
 export type LlamaCppForm = typeof LLAMA_CPP_DEFAULTS
 export type LlamaCppField = keyof LlamaCppForm
 
+const HYBRID_THINKING_VARIANTS = {
+  none: { enable_thinking: false },
+  thinking: { enable_thinking: true },
+} as const
+
 export type LlamaCppConfig = {
   npm: "@ai-sdk/openai-compatible"
   name: "llama.cpp"
@@ -32,6 +37,7 @@ export type LlamaCppConfig = {
       temperature: true
       limit: { context: number; output: number }
       options: { temperature: number; topP: number; topK: number; enable_thinking: boolean }
+      variants?: typeof HYBRID_THINKING_VARIANTS
     }
   >
 }
@@ -92,6 +98,22 @@ export function validateLlamaCppForm(form: LlamaCppForm): LlamaCppResult {
     return { errors }
   }
 
+  const modelID = form.modelID.trim()
+  const model = {
+    name: form.modelName.trim(),
+    tool_call: form.toolCall,
+    reasoning: form.reasoning,
+    temperature: true as const,
+    limit: { context: value.context, output: value.output },
+    options: {
+      temperature: value.temperature,
+      topP: value.topP,
+      topK: value.topK,
+      enable_thinking: form.thinking,
+    },
+    ...(form.reasoning ? { variants: { ...HYBRID_THINKING_VARIANTS } } : {}),
+  }
+
   return {
     errors,
     config: {
@@ -99,19 +121,7 @@ export function validateLlamaCppForm(form: LlamaCppForm): LlamaCppResult {
       name: "llama.cpp",
       options: { baseURL: url.toString().replace(/\/$/, ""), timeout: value.timeout },
       models: {
-        [form.modelID.trim()]: {
-          name: form.modelName.trim(),
-          tool_call: form.toolCall,
-          reasoning: form.reasoning,
-          temperature: true,
-          limit: { context: value.context, output: value.output },
-          options: {
-            temperature: value.temperature,
-            topP: value.topP,
-            topK: value.topK,
-            enable_thinking: form.thinking,
-          },
-        },
+        [modelID]: model,
       },
     },
   }

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import { Effect } from "effect"
-import type { ModelMessage } from "ai"
+import { jsonSchema, type ModelMessage, type Tool } from "ai"
 import { ProviderV2 } from "@opencode-ai/core/provider"
 import { ModelV2 } from "@opencode-ai/core/model"
 import { SessionV1 } from "@opencode-ai/core/v1/session"
@@ -71,7 +71,11 @@ function user(name: string): SessionV1.User {
   }
 }
 
-async function prepare(name: string, oauth = false) {
+async function prepare(
+  name: string,
+  oauth = false,
+  opts: { model?: Provider.Model; permission?: Agent.Info["permission"]; tools?: Record<string, Tool> } = {},
+) {
   const auth: Auth.Info | undefined = oauth
     ? { type: "oauth", refresh: "refresh", access: "access", expires: Date.now() + 60_000 }
     : undefined
@@ -90,11 +94,12 @@ async function prepare(name: string, oauth = false) {
     LLMRequestPrep.prepare({
       user: user(name),
       sessionID: "ses_test",
-      model,
+      model: opts.model ?? model,
       agent: agent(name),
+      permission: opts.permission,
       system: [],
       messages: [{ role: "user", content: "Generate a name" }] satisfies ModelMessage[],
-      tools: {},
+      tools: opts.tools ?? {},
       provider,
       auth,
       plugin,
@@ -104,38 +109,52 @@ async function prepare(name: string, oauth = false) {
   )
 }
 
-describe("Kilo persona in generated metadata requests", () => {
-  test.each(["title", "branch-name"])("omits the persona for %s generation", async (name) => {
+describe("LLM request system prompt", () => {
+  test.each(["title", "branch-name"])("keeps the compact baseline for %s generation", async (name) => {
     const result = await prepare(name)
 
+    expect(result.system[0]).toContain("You are Kilo, an AI coding agent.")
     expect(result.system[0]).toContain(`${name} generation prompt`)
     expect(result.system[0]).toContain("request-specific system text")
-    expect(result.system[0]).not.toContain(SystemPrompt.soul())
   })
 
-  test.each(["title", "branch-name"])("omits the persona from OpenAI OAuth %s generation", async (name) => {
+  test.each(["title", "branch-name"])("uses the compact baseline in OpenAI OAuth %s generation", async (name) => {
     const result = await prepare(name, true)
 
+    expect(result.params.options.instructions).toContain("You are Kilo, an AI coding agent.")
     expect(result.params.options.instructions).toContain(`${name} generation prompt`)
     expect(result.params.options.instructions).toContain("request-specific system text")
-    expect(result.params.options.instructions).not.toContain(SystemPrompt.soul())
   })
 
-  test("keeps the persona for ordinary agent requests", async () => {
-    const result = await prepare("code")
-    const oauth = await prepare("code", true)
+  test("does not add model-specific prompt text", async () => {
+    const mdl = { ...model, prompt: "anthropic" } satisfies Provider.Model
+    const result = await prepare("code", false, { model: mdl })
 
-    expect(result.system[0]).toContain(SystemPrompt.soul())
-    expect(oauth.params.options.instructions).toContain(SystemPrompt.soul())
+    expect(result.system[0]).not.toContain(SystemPrompt.provider(mdl).join("\n"))
   })
 
-  test("chat agent strips system, tools, and soul", async () => {
+  test("chat agent strips system and tools", async () => {
     const result = await prepare("chat")
     expect(result.system).toEqual([])
     expect(Object.keys(result.tools)).toEqual([])
     expect(result.messages.every((m) => m.role === "user" || m.role === "assistant")).toBe(true)
     expect(result.messages.some((m) => m.role === "system")).toBe(false)
   })
+})
+
+test("omits fully denied tools from the prepared request", async () => {
+  const result = await prepare("code", false, {
+    permission: [
+      { permission: "*", pattern: "*", action: "deny" },
+      { permission: "read", pattern: "*", action: "allow" },
+    ],
+    tools: {
+      read: { description: "Read", inputSchema: jsonSchema({ type: "object", properties: {} }) },
+      write: { description: "Write", inputSchema: jsonSchema({ type: "object", properties: {} }) },
+    },
+  })
+
+  expect(Object.keys(result.tools)).toEqual(["read"])
 })
 
 describe("LLM request output tokens", () => {

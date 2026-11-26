@@ -31,6 +31,8 @@ Use the exact model ID from the response when you configure Kilo Code. If your s
 
 The default generation settings are temperature `0.6`, Top P `0.95`, and Top K `20`; the request timeout defaults to 10 minutes. Enable tool calling, reasoning, or thinking mode only when your model and server support them. Set the token limits to match the model and server configuration so Kilo Code does not assume a larger context window than is available.
 
+When **Reasoning** is enabled in the setup form, Kilo saves two chat variants — **none** (thinking off) and **thinking** (thinking on) — instead of generic OpenAI-style effort levels. The **Thinking** switch sets the default for **Default** in the picker (`enable_thinking` in model options). Match `llama-server` flags such as `--reasoning on` and your chat template when reasoning is enabled.
+
 ## Troubleshooting
 
 - **Connection refused:** Start `llama-server` and confirm the host, port, and `/v1` path in the Server URL field.

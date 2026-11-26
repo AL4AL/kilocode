@@ -8,7 +8,6 @@ import type { Agent } from "@/agent/agent"
 import type { MessageV2 } from "../message-v2"
 import type { Provider } from "@/provider/provider"
 import { ProviderTransform } from "@/provider/transform"
-import { SystemPrompt } from "../system"
 import { USER_AGENT } from "@/installation" // kilocode_change
 import { Effect, Record } from "effect"
 import { jsonSchema, tool as aiTool, type ModelMessage, type Tool } from "ai"
@@ -27,7 +26,6 @@ import {
 import { Identity } from "@kilocode/kilo-telemetry"
 import { KiloSession } from "@/kilocode/session"
 import { stripInternalOptions } from "@/kilocode/agent/options"
-import { KilocodeSystemPrompt } from "@/kilocode/system-prompt"
 import { KiloLLM } from "@/kilocode/session/llm"
 import { isChat, chatMessages } from "@/kilocode/session/chat-agent"
 // kilocode_change end
@@ -71,13 +69,11 @@ const mergeOptions = (target: Record<string, any>, source: Record<string, any> |
 export const prepare = Effect.fn("LLMRequestPrep.prepare")(function* (input: PrepareInput) {
   const chatMode = isChat(input.agent.name) // kilocode_change
   const isOpenaiOauth = input.provider.id === "openai" && input.auth?.type === "oauth"
-  const includePersona = KilocodeSystemPrompt.shouldIncludePersona(input.agent.name) // kilocode_change
   const system = [
     [
-      // kilocode_change start - soul defines core identity and personality
-      ...(isOpenaiOauth || !includePersona ? [] : [SystemPrompt.soul()]),
-      // kilocode_change end
-      ...(input.agent.prompt ? [input.agent.prompt] : SystemPrompt.provider(input.model)),
+      // kilocode_change start - minimal system prompt to reduce starting token usage
+      `You are Kilo, an AI coding agent. Follow the user's latest request; treat earlier messages as relevant context only. Use tools and project instructions as needed. Ask when a material ambiguity or authorization issue prevents safe progress.`,
+      ...(input.agent.prompt ? [input.agent.prompt] : []),
       ...input.system,
       ...(input.user.system ? [input.user.system] : []),
     ]
@@ -121,9 +117,7 @@ export const prepare = Effect.fn("LLMRequestPrep.prepare")(function* (input: Pre
     delete options.include
   }
   if (isOpenaiOauth) {
-    // kilocode_change start - prepend soul to instructions
-    options.instructions = [...(includePersona ? [SystemPrompt.soul()] : []), ...system].join("\n")
-    // kilocode_change end
+    options.instructions = system.join("\n")
   }
 
   const messages =

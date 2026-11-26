@@ -31,10 +31,26 @@ describe("llama.cpp provider setup", () => {
             temperature: true,
             limit: { context: 131072, output: 32768 },
             options: { temperature: 0.6, topP: 0.95, topK: 20, enable_thinking: true },
+            variants: {
+              none: { enable_thinking: false },
+              thinking: { enable_thinking: true },
+            },
           },
         },
       },
     })
+  })
+
+  it("omits reasoning variants when reasoning capability is disabled", () => {
+    const result = validateLlamaCppForm({
+      ...LLAMA_CPP_DEFAULTS,
+      reasoning: false,
+      thinking: false,
+    })
+    if (!result.config) throw new Error("Expected valid config")
+    const model = result.config.models["qwen36-local"]
+    expect(model?.variants).toBeUndefined()
+    expect(model?.options.enable_thinking).toBe(false)
   })
 
   it("rejects malformed URLs and settings outside supported ranges", () => {

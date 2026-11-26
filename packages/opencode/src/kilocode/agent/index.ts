@@ -16,12 +16,13 @@ import { pattern } from "@/kilocode/mcp/tool-id"
 import { KilocodeConfigSources } from "../config/sources"
 import { envGuards } from "@opencode-ai/core/kilocode/shell-env-files"
 
-import PROMPT_DEBUG from "../../agent/prompt/debug.txt"
-import PROMPT_ORCHESTRATOR from "../../agent/prompt/orchestrator.txt"
-import PROMPT_ASK from "../../agent/prompt/ask.txt"
-import PROMPT_EXPLORE from "../../agent/prompt/explore.txt"
-
-const mermaidClients = new Set(["vscode", "jetbrains"])
+const PROMPT_ASK = "Answer the user's question using relevant project context."
+const PROMPT_DEBUG =
+  "Investigate reported issues from evidence. If asked to fix one, make the smallest effective change and verify it; otherwise report the diagnosis."
+const PROMPT_EXPLORE = "Find the requested files or facts in the codebase and report concise findings with paths."
+const PROMPT_ORCHESTRATOR =
+  "Coordinate complex work by delegating independent subtasks to suitable agents, then synthesize the results."
+const PROMPT_PLAN = "Turn the user's goal into a concise, actionable plan with relevant steps, dependencies, risks, and validation."
 
 const readable: Record<string, "allow"> = {
   "cat *": "allow",
@@ -535,6 +536,7 @@ export function patchAgents(
     agents.code = {
       ...agents.build,
       name: "code",
+      description: "Default coding agent.",
       permission: Permission.merge(
         defaults,
         agents.build.permission,
@@ -550,7 +552,8 @@ export function patchAgents(
     const guard = planGuard(worktree, kilo.mcpRules, enabled)
     agents.plan = {
       ...agents.plan,
-      description: "Plan mode. Can only edit plan files; all other filesystem mutations are denied.",
+      description: "Turn a request into an actionable plan.",
+      prompt: agents.plan.prompt ?? PROMPT_PLAN,
       permission: Permission.merge(
         defaults,
         guard,
@@ -566,7 +569,7 @@ export function patchAgents(
   if (agents.explore) {
     agents.explore = {
       ...agents.explore,
-      description: `${agents.explore.description} Bash is limited to an allowlist of read-only commands. For required scripts, tests, or binary-analysis commands outside that allowlist, select an available agent whose permissions allow them while preserving the requested no-change scope.`,
+      description: "Find and explain relevant codebase files.",
       permission: Permission.merge(
         defaults,
         Permission.fromConfig({
@@ -602,7 +605,7 @@ export function patchAgents(
   // Add debug agent
   agents.debug = {
     name: "debug",
-    description: "Diagnose and fix software issues with systematic debugging methodology.",
+    description: "Investigate and resolve software issues.",
     prompt: PROMPT_DEBUG,
     options: {},
     permission: Permission.merge(
@@ -622,7 +625,7 @@ export function patchAgents(
   // Add orchestrator agent
   agents.orchestrator = {
     name: "orchestrator",
-    description: "Coordinate complex tasks by delegating to specialized agents in parallel.",
+    description: "Coordinate complex work by delegating subtasks and synthesizing results.",
     prompt: PROMPT_ORCHESTRATOR,
     options: {},
     permission: Permission.merge(
@@ -659,7 +662,7 @@ export function patchAgents(
 
   agents.chat = {
     name: "chat",
-    description: "Plain model conversation without tools, skills, or project context.",
+    description: "Plain model conversation.",
     prompt: "",
     options: {},
     permission: Permission.merge(
@@ -675,13 +678,8 @@ export function patchAgents(
   const guard = askGuard(kilo.mcpRules, enabled)
   agents.ask = {
     name: "ask",
-    description: "Get answers and explanations without making changes to the codebase.",
-    prompt: mermaidClients.has(Flag.KILO_CLIENT)
-      ? PROMPT_ASK
-      : PROMPT_ASK.replace(
-          "- Use Mermaid diagrams when they help clarify your response",
-          "- Use plain-text or ASCII diagrams when they help clarify your response. The CLI cannot render Mermaid diagrams. Only provide Mermaid source when the user explicitly requests it",
-        ),
+    description: "Answer questions using relevant project context.",
+    prompt: PROMPT_ASK,
     options: {},
     permission: Permission.merge(
       defaults,

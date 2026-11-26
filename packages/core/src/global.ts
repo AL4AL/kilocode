@@ -9,7 +9,7 @@ import { ensureRealDir, resolveState } from "./kilocode/global" // kilocode_chan
 import { Flag } from "./flag/flag"
 import { makeGlobalNode } from "./effect/app-node"
 
-const app = "kilo" // kilocode_change
+const app = "kilo-plus" // kilocode_change
 // kilocode_change start
 // Defensively strip newline characters from the resolved XDG paths.
 // If `$HOME` (or any `$XDG_*_HOME` override) has a trailing newline in

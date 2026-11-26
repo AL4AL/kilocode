@@ -201,13 +201,13 @@ const LlamaCppDialog = () => {
         </div>
 
         <h4 style={{ margin: 0 }}>{language.t("settings.providers.llamaCpp.capabilities")}</h4>
-        <Switch checked={form.toolCall} onChange={(value) => update("toolCall", value)} hideLabel>
+        <Switch checked={form.toolCall} onChange={(value) => update("toolCall", value)}>
           {language.t("settings.providers.llamaCpp.toolCall")}
         </Switch>
-        <Switch checked={form.reasoning} onChange={(value) => update("reasoning", value)} hideLabel>
+        <Switch checked={form.reasoning} onChange={(value) => update("reasoning", value)}>
           {language.t("settings.providers.llamaCpp.reasoning")}
         </Switch>
-        <Switch checked={form.thinking} onChange={(value) => update("thinking", value)} hideLabel>
+        <Switch checked={form.thinking} onChange={(value) => update("thinking", value)}>
           {language.t("settings.providers.llamaCpp.thinking")}
         </Switch>
 
