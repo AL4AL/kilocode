@@ -93,9 +93,9 @@ export namespace OpenRouterBatchToolReplay {
       agent,
       session,
       model,
-      processor: handle,
-      bypassAgentCheck: false,
-      messages: rows,
+        processor: handle,
+        namedAgentTypes: [],
+        messages: rows,
       promptOps: stubOps,
       memoryCache: cache,
     })
